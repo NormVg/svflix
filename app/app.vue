@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from './stores/auth'
 import { useMediaStore } from './stores/media'
+import { useNotesStore } from './stores/notes'
 import { useRouter } from 'vue-router'
 
 const showIntro = ref(true);
@@ -16,14 +17,17 @@ const onIntroDone = () => {
 
 const authStore = useAuthStore();
 const mediaStore = useMediaStore();
+const notesStore = useNotesStore();
 const router = useRouter();
 
 const { currentUser, authLoading, authMessage, username, password } = storeToRefs(authStore);
 const { mediaItems, categories, loading, message, groupedByCategory } = storeToRefs(mediaStore);
+const { unreadCount } = storeToRefs(notesStore);
 
 const handleLogin = () =>
   authStore.login(async () => {
     await mediaStore.refreshData();
+    await notesStore.fetchNotes();
   });
 
 const handleLogout = () =>
@@ -38,6 +42,7 @@ const handleLogout = () =>
 await authStore.checkAuth();
 if (currentUser.value) {
   await mediaStore.refreshData();
+  await notesStore.fetchNotes();
 }
 
 onMounted(() => {
@@ -88,7 +93,7 @@ onMounted(() => {
       <!-- MAIN APP VIEW -->
       <template v-else>
         <!-- Main Layout with Router View -->
-        <NavBar v-if="!$route.path.startsWith('/watch')" :username="currentUser?.username" @logout="handleLogout" />
+        <NavBar v-if="!$route.path.startsWith('/watch')" :username="currentUser?.username" :unread-count="unreadCount" @logout="handleLogout" />
         <NuxtPage />
 
         <!-- Floating Add Button -> Now navigates to /upload -->

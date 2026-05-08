@@ -66,9 +66,33 @@ export const mediaCategories = pgTable(
   (table) => [primaryKey({ columns: [table.mediaItemId, table.categoryId] })],
 );
 
+export const loveNotes = pgTable("love_notes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  authorUserId: uuid("author_user_id")
+    .notNull()
+    .references(() => appUsers.id, { onDelete: "restrict" }),
+  body: text("body").notNull(),
+  mediaItemId: uuid("media_item_id")
+    .references(() => mediaItems.id, { onDelete: "set null" }),
+  isRead: text("is_read").default("false").notNull(), // using text to avoid boolean migration issues
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const loveNotesRelations = relations(loveNotes, ({ one }) => ({
+  author: one(appUsers, {
+    fields: [loveNotes.authorUserId],
+    references: [appUsers.id],
+  }),
+  mediaItem: one(mediaItems, {
+    fields: [loveNotes.mediaItemId],
+    references: [mediaItems.id],
+  }),
+}));
+
 export const appUsersRelations = relations(appUsers, ({ many }) => ({
   mediaItems: many(mediaItems),
   mediaNotes: many(mediaNotes),
+  loveNotes: many(loveNotes),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({

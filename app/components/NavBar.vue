@@ -3,6 +3,7 @@ import { useWindowScroll } from '@vueuse/core'
 
 const props = defineProps<{
   username?: string
+  unreadCount?: number
 }>()
 
 const emit = defineEmits<{
@@ -22,6 +23,12 @@ const isScrolled = computed(() => y.value > 0)
         <li><NuxtLink to="/categories" exact-active-class="active">Categories</NuxtLink></li>
         <li><NuxtLink to="/images" exact-active-class="active">Images</NuxtLink></li>
         <li><NuxtLink to="/videos" exact-active-class="active">Videos</NuxtLink></li>
+        <li class="notes-link">
+          <NuxtLink to="/notes" exact-active-class="active">
+            Notes
+            <span v-if="unreadCount && unreadCount > 0" class="nav-badge">{{ unreadCount }}</span>
+          </NuxtLink>
+        </li>
       </ul>
     </div>
     
@@ -135,6 +142,33 @@ const isScrolled = computed(() => y.value > 0)
 .logout-btn:hover {
   background: #fff;
   color: #141414;
+}
+
+.notes-link a {
+  position: relative;
+}
+
+.nav-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #e50914;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.6); }
+  50% { box-shadow: 0 0 0 4px rgba(229, 9, 20, 0); }
 }
 
 @media screen and (max-width: 800px) {
