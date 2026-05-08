@@ -12,8 +12,16 @@ const playMedia = (id: string) => {
   router.push(`/watch/${id}`)
 }
 
+const randomSeed = ref(Math.random())
+
+onMounted(() => {
+  randomSeed.value = Math.random()
+})
+
 const featuredItem = computed(() => {
-  return mediaItems.value.length > 0 ? mediaItems.value[0] : undefined
+  if (mediaItems.value.length === 0) return undefined
+  const randomIndex = Math.floor(randomSeed.value * mediaItems.value.length)
+  return mediaItems.value[randomIndex]
 })
 </script>
 

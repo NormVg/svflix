@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useMediaStore } from '../stores/media'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const mediaStore = useMediaStore()
 
@@ -17,20 +19,20 @@ const imageCount = computed(() => mediaItems.value.filter(m => m.mediaType === '
 <template>
   <div class="profile-page">
     <div class="profile-header">
-      <h1>Account Settings</h1>
+      <h1>Vault Profile</h1>
     </div>
     
     <div class="profile-content">
       <div class="profile-section">
-        <h2>Membership & Billing</h2>
+        <h2>Account Details</h2>
         <div class="info-group">
           <div class="info-row">
             <span class="label">User</span>
             <span class="value font-bold">{{ currentUser?.username }}</span>
           </div>
           <div class="info-row">
-            <span class="label">Password</span>
-            <span class="value">********</span>
+            <span class="label">Access Level</span>
+            <span class="value">Admin (Partner)</span>
           </div>
         </div>
       </div>
@@ -54,11 +56,11 @@ const imageCount = computed(() => mediaItems.value.filter(m => m.mediaType === '
       </div>
 
       <div class="profile-section">
-        <h2>Settings</h2>
+        <h2>Quick Actions</h2>
         <div class="settings-actions">
-          <button class="btn-outline">Change Password</button>
-          <button class="btn-outline">Manage Categories</button>
-          <button class="btn-outline text-red">Sign out of all devices</button>
+          <button class="btn-outline" @click="router.push('/upload')">Upload New Memories</button>
+          <button class="btn-outline" @click="router.push('/categories')">Manage Collections</button>
+          <button class="btn-outline text-red" @click="authStore.logout()">Sign Out</button>
         </div>
       </div>
     </div>
