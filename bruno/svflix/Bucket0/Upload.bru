@@ -1,0 +1,15 @@
+meta {
+  name: Upload Object
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/bucket0/upload
+  body: multipartForm
+}
+
+body:multipartForm {
+  file: @file(./sample.txt)
+  key: {{key}}
+}
