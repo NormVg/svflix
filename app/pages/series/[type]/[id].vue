@@ -37,6 +37,13 @@ const handleDelete = async (itemId: string) => {
     await mediaStore.deleteMedia(itemId)
   }
 }
+
+const getDisplayTitle = (item: any, index: number) => {
+  const title = item.title || ''
+  const isFilename = /\.(mp4|mov|avi|mkv|jpg|jpeg|png|gif|webp|heic)$/i.test(title)
+  if (title && !isFilename) return title
+  return `Memory ${index + 1}`
+}
 </script>
 
 <template>
@@ -103,7 +110,7 @@ const handleDelete = async (itemId: string) => {
           
           <div class="ep-info">
             <div class="ep-header">
-              <h3 class="ep-title">{{ item.title || `Memory ${index + 1}` }}</h3>
+              <h3 class="ep-title">{{ getDisplayTitle(item, index) }}</h3>
               <span class="ep-date">{{ new Date(item.createdAt).toLocaleDateString() }}</span>
             </div>
             <p class="ep-desc">{{ item.description || 'No description provided.' }}</p>

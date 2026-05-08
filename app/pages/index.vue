@@ -13,9 +13,17 @@ const playMedia = (id: string) => {
 }
 
 const randomSeed = ref(Math.random())
+let bannerInterval: NodeJS.Timeout
 
 onMounted(() => {
   randomSeed.value = Math.random()
+  bannerInterval = setInterval(() => {
+    randomSeed.value = Math.random()
+  }, 10000) // 10 seconds
+})
+
+onUnmounted(() => {
+  clearInterval(bannerInterval)
 })
 
 const featuredItem = computed(() => {

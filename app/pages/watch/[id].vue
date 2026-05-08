@@ -70,6 +70,14 @@ const currentIndex = computed(() => {
 const hasNext = computed(() => currentIndex.value >= 0 && currentIndex.value < playlist.value.length - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
 
+const displayTitle = computed(() => {
+  if (!currentItem.value) return ''
+  const title = currentItem.value.title || ''
+  const isFilename = /\.(mp4|mov|avi|mkv|jpg|jpeg|png|gif|webp|heic)$/i.test(title)
+  if (title && !isFilename) return title
+  return new Date(currentItem.value.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+})
+
 // Editing logic
 const isEditing = ref(false)
 const editableTitle = ref('')
@@ -256,8 +264,7 @@ const toggleFullscreen = () => {
                 </button>
               </template>
               <template v-else>
-                <h2 v-if="currentItem.title" class="current-title">{{ currentItem.title }}</h2>
-                <h2 v-else class="fallback-title">Memory from {{ new Date(currentItem.createdAt).toLocaleDateString() }}</h2>
+                <h2 class="current-title">{{ displayTitle }}</h2>
                 <button class="edit-btn-tiny" @click="startEditing" title="Edit Title">
                   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
                 </button>

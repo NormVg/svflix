@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useMediaStore, type MediaItem } from '../stores/media'
+import { computed } from 'vue'
 
 const props = defineProps<{
   item?: MediaItem
@@ -11,51 +12,75 @@ const emit = defineEmits<{
 
 const mediaStore = useMediaStore()
 
-// Hero handles media items by rendering them as immersive backgrounds.
+const displayTitle = computed(() => {
+  if (!props.item) return ''
+  const title = props.item.title || ''
+  
+  // Check if title is likely a raw filename
+  const isFilename = /\.(mp4|mov|avi|mkv|jpg|jpeg|png|gif|webp|heic)$/i.test(title)
+  
+  if (title && !isFilename) {
+    return title
+  }
+  
+  // Fallback to formatted date
+  return new Date(props.item.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+})
 </script>
 
 <template>
-  <div class="hero" v-if="item">
-    <div class="hero-bg">
-      <img 
-        v-if="item.mediaType === 'image'" 
-        :src="mediaStore.getMediaUrl(item.bucketKey)" 
-        class="hero-media" 
-      />
-      <video 
-        v-else 
-        :src="mediaStore.getMediaUrl(item.bucketKey)" 
-        preload="auto" 
-        muted 
-        playsinline 
-        autoplay 
-        loop 
-        class="hero-media"
-      ></video>
-      <div class="hero-vignette"></div>
-    </div>
-    
-    <div class="hero-content">
-      <h1 v-if="item.title" class="hero-title">{{ item.title }}</h1>
-      <p class="hero-description">{{ item.description || "A special memory saved in the vault." }}</p>
+  <Transition name="hero-fade" mode="out-in">
+    <div class="hero" v-if="item" :key="item.id">
+      <div class="hero-bg">
+        <img 
+          v-if="item.mediaType === 'image'" 
+          :src="mediaStore.getMediaUrl(item.bucketKey)" 
+          class="hero-media" 
+        />
+        <video 
+          v-else 
+          :src="mediaStore.getMediaUrl(item.bucketKey)" 
+          preload="auto" 
+          muted 
+          playsinline 
+          autoplay 
+          loop 
+          class="hero-media"
+        ></video>
+        <div class="hero-vignette"></div>
+      </div>
       
-      <div class="hero-actions">
-        <button class="btn btn-play" @click="emit('play', item.id)">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          Play
-        </button>
+      <div class="hero-content">
+        <h1 class="hero-title">{{ displayTitle }}</h1>
+        <p class="hero-description">{{ item.description || "A special memory saved in the vault." }}</p>
+        
+        <div class="hero-actions">
+          <button class="btn btn-play" @click="emit('play', item.id)">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            Play
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="hero hero-empty" v-else>
-    <div class="hero-content">
-      <h1 class="hero-title">Welcome to SVFlix</h1>
-      <p class="hero-description">Your private space is empty. Start adding memories to see them featured here.</p>
+    <div class="hero hero-empty" v-else key="empty">
+      <div class="hero-content">
+        <h1 class="hero-title">Welcome to SVFlix</h1>
+        <p class="hero-description">Your private space is empty. Start adding memories to see them featured here.</p>
+      </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
+.hero-fade-enter-active,
+.hero-fade-leave-active {
+  transition: opacity 1s ease;
+}
+.hero-fade-enter-from,
+.hero-fade-leave-to {
+  opacity: 0;
+}
+
 .hero {
   position: relative;
   height: 80vh;
@@ -119,6 +144,9 @@ const mediaStore = useMediaStore()
   color: #fff;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-description {

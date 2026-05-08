@@ -17,6 +17,13 @@ const isHovered = ref(false)
 const playMedia = () => {
   emit('play', props.item.id)
 }
+
+const displayTitle = computed(() => {
+  const title = props.item.title || ''
+  const isFilename = /\.(mp4|mov|avi|mkv|jpg|jpeg|png|gif|webp|heic)$/i.test(title)
+  if (title && !isFilename) return title
+  return new Date(props.item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+})
 </script>
 
 <template>
@@ -65,7 +72,7 @@ const playMedia = () => {
           <span class="date-text">{{ new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }}</span>
         </div>
         
-        <h3 v-if="item.title" class="custom-title">{{ item.title }}</h3>
+        <h3 class="custom-title">{{ displayTitle }}</h3>
         
         <div class="tags" v-if="item.categories && item.categories.length > 0">
           <span v-for="cat in item.categories" :key="cat.id" class="tag-item">{{ cat.name }}</span>
