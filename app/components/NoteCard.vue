@@ -1,27 +1,12 @@
 <script setup lang="ts">
 import { type LoveNote } from '../stores/notes'
-import { useNotesStore } from '../stores/notes'
 import { useAuthStore } from '../stores/auth'
 
 const props = defineProps<{ note: LoveNote }>()
-
-const notesStore = useNotesStore()
 const authStore = useAuthStore()
 
-const isOpen = ref(false)
-const isAnimating = ref(false)
-
 const isMine = computed(() => props.note.authorId === authStore.currentUser?.id)
-
-const toggle = async () => {
-  if (isAnimating.value) return
-  isAnimating.value = true
-  isOpen.value = !isOpen.value
-  if (isOpen.value) {
-    await notesStore.markRead(props.note.id)
-  }
-  setTimeout(() => { isAnimating.value = false }, 500)
-}
+const isUnread = computed(() => props.note.isRead === 'false' && !isMine.value)
 
 const formattedDate = computed(() => {
   const d = new Date(props.note.createdAt)
@@ -29,228 +14,165 @@ const formattedDate = computed(() => {
     ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 })
 
-const isUnread = computed(() => props.note.isRead === 'false' && !isMine.value)
+const preview = computed(() => {
+  const text = props.note.body
+  return text.length > 80 ? text.slice(0, 80).trimEnd() + '…' : text
+})
 </script>
 
 <template>
-  <div 
-    class="note-card" 
-    :class="{ 'is-open': isOpen, 'is-mine': isMine, 'is-unread': isUnread }"
-    @click="toggle"
-  >
-    <!-- Folded Header (always visible) -->
-    <div class="note-header">
-      <div class="note-header-left">
-        <div class="author-dot" :class="isMine ? 'dot-mine' : 'dot-theirs'"></div>
-        <span class="author-name">{{ note.authorDisplayName || note.authorUsername }}</span>
-        <span v-if="isUnread" class="unread-badge">New</span>
-      </div>
-      <div class="note-header-right">
-        <span class="note-date">{{ formattedDate }}</span>
-        <svg class="chevron" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-        </svg>
-      </div>
-    </div>
+  <NuxtLink :to="`/notes/${note.id}`" class="note-card" :class="{ 'is-mine': isMine, 'is-unread': isUnread }">
+    <!-- Envelope flap (decorative) -->
+    <div class="envelope-flap" :class="isMine ? 'flap-mine' : 'flap-theirs'"></div>
 
-    <!-- Crease Line (folded indicator) -->
-    <div class="crease-line"></div>
-
-    <!-- Note Body (unfolds) -->
-    <div class="note-body-wrapper">
-      <div class="note-body">
-        <p class="note-text">{{ note.body }}</p>
-
-        <!-- Tagged Media Preview -->
-        <div v-if="note.mediaBucketKey" class="tagged-media" @click.stop>
-          <img 
-            v-if="note.mediaType === 'image'" 
-            :src="notesStore.getMediaUrl(note.mediaBucketKey)" 
-            class="media-preview"
-          />
-          <video 
-            v-else 
-            :src="notesStore.getMediaUrl(note.mediaBucketKey) + '#t=1.0'" 
-            preload="metadata"
-            muted
-            playsinline
-            class="media-preview"
-          ></video>
-          <div class="media-label">
-            <svg v-if="note.mediaType === 'video'" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <svg v-else viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-            <span>{{ note.mediaTitle || 'Tagged Memory' }}</span>
-          </div>
+    <div class="note-inner">
+      <div class="note-top">
+        <div class="author-row">
+          <div class="author-dot" :class="isMine ? 'dot-mine' : 'dot-theirs'"></div>
+          <span class="author-name">{{ note.authorDisplayName || note.authorUsername }}</span>
+          <span v-if="isUnread" class="unread-pill">New 💌</span>
         </div>
+        <span class="note-date">{{ formattedDate }}</span>
+      </div>
+
+      <p class="note-preview">{{ preview }}</p>
+
+      <div class="note-footer">
+        <span v-if="note.mediaBucketKey" class="has-media">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          Memory attached
+        </span>
+        <span class="open-hint">Open →</span>
       </div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 
 <style scoped>
 .note-card {
-  border-radius: 10px;
+  display: block;
+  text-decoration: none;
+  color: inherit;
   background: #1c1a17;
   border: 1px solid #2e2a25;
-  cursor: pointer;
+  border-radius: 10px;
   overflow: hidden;
-  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
-  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s, border-color 0.2s;
+  position: relative;
 }
 
 .note-card:hover {
-  border-color: #4a3f30;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-  transform: translateY(-1px);
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  border-color: #5a4a38;
 }
 
 .note-card.is-mine {
-  background: #181a1c;
-  border-color: #252a2e;
+  background: #181b1f;
+  border-color: #252d36;
 }
+.note-card.is-mine:hover { border-color: #364050; }
 
 .note-card.is-unread {
-  border-color: rgba(229, 9, 20, 0.4);
-  box-shadow: 0 0 0 1px rgba(229, 9, 20, 0.15);
+  border-color: rgba(229,9,20,0.5);
+  box-shadow: 0 0 0 1px rgba(229,9,20,0.15), inset 0 0 40px rgba(229,9,20,0.03);
 }
 
-/* Header */
-.note-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  gap: 12px;
+/* Envelope flap accent at top */
+.envelope-flap {
+  height: 3px;
+  width: 100%;
 }
+.flap-theirs { background: linear-gradient(to right, #e50914, #ff6b6b); }
+.flap-mine   { background: linear-gradient(to right, #4d90fe, #74b9ff); }
 
-.note-header-left {
+.note-inner {
+  padding: 18px 20px 16px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  flex: 1;
-  min-width: 0;
 }
 
-.note-header-right {
+.note-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.author-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
-  color: #666;
 }
 
 .author-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-mine { background: #4d90fe; }
+.dot-mine   { background: #4d90fe; }
 .dot-theirs { background: #e50914; }
 
 .author-name {
   font-size: 0.95rem;
   font-weight: 600;
   color: #ddd;
-  white-space: nowrap;
 }
 
-.unread-badge {
-  background: #e50914;
-  color: #fff;
-  font-size: 0.65rem;
+.unread-pill {
+  background: rgba(229,9,20,0.15);
+  color: #ff6b6b;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 8px;
   border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border: 1px solid rgba(229,9,20,0.3);
+  letter-spacing: 0.3px;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 8px rgba(229,9,20,0.4); }
 }
 
 .note-date {
-  font-size: 0.78rem;
-  white-space: nowrap;
+  font-size: 0.75rem;
+  color: #666;
 }
 
-.chevron {
-  width: 18px;
-  height: 18px;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  flex-shrink: 0;
-}
-.note-card.is-open .chevron {
-  transform: rotate(180deg);
-}
-
-/* Crease line (envelope effect) */
-.crease-line {
-  height: 1px;
-  margin: 0 16px;
-  background: repeating-linear-gradient(
-    to right,
-    #2e2a25 0px,
-    #2e2a25 8px,
-    transparent 8px,
-    transparent 14px
-  );
-  transition: opacity 0.3s;
-}
-.note-card.is-open .crease-line {
-  background: #2e2a25;
-}
-
-/* Body — unfold animation */
-.note-body-wrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.note-card.is-open .note-body-wrapper {
-  grid-template-rows: 1fr;
-}
-
-.note-body {
-  overflow: hidden;
-}
-
-.note-text {
-  padding: 20px 20px 16px;
-  color: #ccc;
-  font-size: 1rem;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  margin: 0;
+.note-preview {
+  font-size: 0.92rem;
+  color: #999;
   font-style: italic;
   font-family: 'Georgia', serif;
+  line-height: 1.6;
+  margin: 0;
 }
 
-/* Tagged Media */
-.tagged-media {
-  margin: 0 20px 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #2e2a25;
-  cursor: default;
+.note-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
 }
 
-.media-preview {
-  width: 100%;
-  max-height: 260px;
-  object-fit: cover;
-  display: block;
-}
-
-.media-label {
+.has-media {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: #111;
-  color: #999;
-  font-size: 0.82rem;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: #666;
 }
-.media-label svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
+.has-media svg { width: 12px; height: 12px; }
+
+.open-hint {
+  font-size: 0.75rem;
+  color: #555;
+  transition: color 0.2s;
 }
+.note-card:hover .open-hint { color: #aaa; }
 </style>

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { db } from "../../../db/client";
-import { loveNotes } from "../../../db/schema";
+import { db } from "../../db/client";
+import { loveNotes } from "../../db/schema";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
