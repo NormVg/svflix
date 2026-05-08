@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useMediaStore } from '../stores/media'
+import SeriesRow from '../components/SeriesRow.vue'
 
 const mediaStore = useMediaStore()
-const { mediaItems, groupedByCategory } = storeToRefs(mediaStore)
+const { mediaItems, groupedByCategory, groupedByDate } = storeToRefs(mediaStore)
 
 const playMedia = (key: string) => {
   window.open(mediaStore.getMediaUrl(key), '_blank')
@@ -23,18 +24,14 @@ const featuredItem = computed(() => {
     <HeroFeatured :item="featuredItem" @play="playMedia" />
 
     <div class="rails-container">
-      <!-- Recent -->
-      <MediaRow title="Recently Added" :items="mediaItems" @play="playMedia" @delete="handleDelete" />
+      <!-- Recently Added (Raw items) -->
+      <MediaRow title="Recently Added" :items="mediaItems.slice(0, 15)" @play="playMedia" @delete="handleDelete" />
       
-      <!-- Categories -->
-      <MediaRow 
-        v-for="group in groupedByCategory" 
-        :key="group.category.id"
-        :title="group.category.name"
-        :items="group.items"
-        @play="playMedia" 
-        @delete="handleDelete"
-      />
+      <!-- Collections as Web Series -->
+      <SeriesRow title="Collections" :groups="groupedByCategory" type="category" />
+
+      <!-- Timeline as Web Series -->
+      <SeriesRow title="Timeline" :groups="groupedByDate" type="date" />
     </div>
   </div>
 </template>

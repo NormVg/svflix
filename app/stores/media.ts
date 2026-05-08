@@ -126,12 +126,31 @@ export const useMediaStore = defineStore('media', () => {
 
   const groupedByCategory = computed(() =>
     categories.value.map((category) => ({
-      category,
+      id: category.id,
+      title: category.name,
       items: mediaItems.value.filter((item) =>
         item.categories.some((c) => c.id === category.id)
       ),
-    }))
+    })).filter(group => group.items.length > 0)
   );
+
+  const groupedByDate = computed(() => {
+    const groups: Record<string, MediaItem[]> = {}
+    mediaItems.value.forEach(item => {
+      const date = new Date(item.createdAt)
+      const key = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      if (!groups[key]) groups[key] = []
+      groups[key].push(item)
+    })
+    
+    return Object.keys(groups)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      .map(key => ({
+        id: key,
+        title: key,
+        items: groups[key]
+      }))
+  });
 
   return {
     mediaItems,
@@ -144,5 +163,6 @@ export const useMediaStore = defineStore('media', () => {
     addNote,
     getMediaUrl,
     groupedByCategory,
+    groupedByDate
   };
 })
