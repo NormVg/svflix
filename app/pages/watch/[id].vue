@@ -15,7 +15,7 @@ const { mediaItems, groupedByCategory, groupedByDate, categories } = storeToRefs
 
 // Mouse idle tracking for hiding UI
 const showControls = ref(true)
-let idleTimeout: NodeJS.Timeout
+let idleTimeout: ReturnType<typeof setTimeout>
 
 const handleMouseMove = () => {
   showControls.value = true
@@ -64,10 +64,10 @@ const playlist = computed(() => {
 })
 
 const currentIndex = computed(() => {
-  return playlist.value.findIndex(item => item.id === mediaId)
+  return playlist.value?.findIndex(item => item.id === mediaId) ?? -1
 })
 
-const hasNext = computed(() => currentIndex.value >= 0 && currentIndex.value < playlist.value.length - 1)
+const hasNext = computed(() => playlist.value && currentIndex.value >= 0 && currentIndex.value < playlist.value.length - 1)
 const hasPrev = computed(() => currentIndex.value > 0)
 
 const displayTitle = computed(() => {
@@ -98,16 +98,16 @@ const saveTitle = async () => {
 }
 
 const goNext = () => {
-  if (hasNext.value) {
+  if (hasNext.value && playlist.value) {
     const nextItem = playlist.value[currentIndex.value + 1]
-    router.replace(`/watch/${nextItem.id}?series=${seriesId}&type=${seriesType}`)
+    if (nextItem) router.replace(`/watch/${nextItem.id}?series=${seriesId}&type=${seriesType}`)
   }
 }
 
 const goPrev = () => {
-  if (hasPrev.value) {
+  if (hasPrev.value && playlist.value) {
     const prevItem = playlist.value[currentIndex.value - 1]
-    router.replace(`/watch/${prevItem.id}?series=${seriesId}&type=${seriesType}`)
+    if (prevItem) router.replace(`/watch/${prevItem.id}?series=${seriesId}&type=${seriesType}`)
   }
 }
 
@@ -135,7 +135,7 @@ const toggleCategory = async (categoryId: string) => {
 }
 
 // Auto-Play Next Episode Logic
-let autoNextTimer: NodeJS.Timeout
+let autoNextTimer: ReturnType<typeof setTimeout>
 
 const startAutoNextImage = () => {
   clearTimeout(autoNextTimer)
@@ -297,7 +297,7 @@ const toggleFullscreen = () => {
               </div>
             </div>
             <div class="ep-counter" v-if="seriesId">
-              Episode {{ currentIndex + 1 }} of {{ playlist.length }}
+              Episode {{ currentIndex + 1 }} of {{ playlist?.length || 0 }}
             </div>
             <button class="control-btn action-btn" @click="downloadCurrent" title="Download">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>

@@ -22,7 +22,7 @@ const seriesData = computed(() => {
 })
 
 const coverUrl = computed(() => {
-  if (seriesData.value && seriesData.value.items.length > 0) {
+  if (seriesData.value && seriesData.value.items && seriesData.value.items.length > 0) {
     return mediaStore.getMediaUrl(seriesData.value.items[0].bucketKey)
   }
   return ''
@@ -63,14 +63,14 @@ const getDisplayTitle = (item: any, index: number) => {
         <div class="series-meta">
           <span class="match-text">100% Match</span>
           <span class="year">{{ new Date().getFullYear() }}</span>
-          <span class="ep-count">{{ seriesData.items.length }} Episodes</span>
+          <span class="ep-count">{{ seriesData?.items?.length || 0 }} Episodes</span>
           <span class="badge">HD</span>
         </div>
         
         <p class="series-desc">A beautiful collection of memories captured and stored in the vault.</p>
         
         <div class="hero-actions">
-          <button class="btn-play" v-if="seriesData.items.length > 0" @click="playMedia(seriesData.items[0].id)">
+          <button class="btn-play" v-if="seriesData?.items && seriesData.items.length > 0" @click="playMedia(seriesData.items[0].id)">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play First
           </button>
         </div>

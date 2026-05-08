@@ -105,7 +105,7 @@ export const useMediaStore = defineStore('media', () => {
     }
   };
 
-  const updateMedia = async (id: string, payload: { title?: string; description?: string }) => {
+  const updateMedia = async (id: string, payload: { title?: string; description?: string; categoryIds?: string[] }) => {
     loading.value = true;
     message.value = "";
     try {
@@ -186,7 +186,7 @@ export const useMediaStore = defineStore('media', () => {
       .map(key => ({
         id: key,
         title: key,
-        items: groups[key]
+        items: groups[key] || []
       }))
   });
 
