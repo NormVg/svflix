@@ -26,12 +26,7 @@ const coverUrl = computed(() => {
 
 const isHovered = ref(false)
 
-const thumbnailStyle = computed(() => {
-  if (coverUrl.value) {
-    return { backgroundImage: `url(${coverUrl.value})` }
-  }
-  return { backgroundImage: `linear-gradient(to bottom, #222, #000)` }
-})
+// Series covers are dynamically generated from the first item in the group.
 
 const openSeries = () => {
   router.push(`/series/${props.type}/${props.id}`)
@@ -45,7 +40,24 @@ const openSeries = () => {
     @mouseleave="isHovered = false"
     @click="openSeries"
   >
-    <div class="card-thumbnail" :style="thumbnailStyle"></div>
+    <div class="card-thumbnail">
+      <template v-if="coverItem">
+        <img 
+          v-if="coverItem.mediaType === 'image'" 
+          :src="mediaStore.getMediaUrl(coverItem.bucketKey)" 
+          class="thumb-media" 
+        />
+        <video 
+          v-else 
+          :src="mediaStore.getMediaUrl(coverItem.bucketKey) + '#t=1.0'" 
+          preload="metadata" 
+          muted 
+          playsinline 
+          class="thumb-media"
+        ></video>
+      </template>
+      <div v-else class="thumb-placeholder"></div>
+    </div>
     
     <div class="card-details">
       <div class="actions-row">
@@ -87,9 +99,22 @@ const openSeries = () => {
 .card-thumbnail {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-size: cover;
-  background-position: center;
   transition: opacity 0.3s;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+.thumb-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #222, #000);
 }
 
 .series-card:hover .card-thumbnail {

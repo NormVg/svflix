@@ -28,12 +28,14 @@ const coverUrl = computed(() => {
   return ''
 })
 
-const playMedia = (key: string) => {
-  window.open(mediaStore.getMediaUrl(key), '_blank')
+const playMedia = (itemId: string) => {
+  router.push(`/watch/${itemId}?series=${id}&type=${type}`)
 }
 
 const handleDelete = async (itemId: string) => {
-  await mediaStore.deleteMedia(itemId)
+  if (confirm("Are you sure you want to delete this memory? This action cannot be undone.")) {
+    await mediaStore.deleteMedia(itemId)
+  }
 }
 </script>
 
@@ -61,7 +63,7 @@ const handleDelete = async (itemId: string) => {
         <p class="series-desc">A beautiful collection of memories captured and stored in the vault.</p>
         
         <div class="hero-actions">
-          <button class="btn-play" v-if="seriesData.items.length > 0" @click="playMedia(seriesData.items[0].bucketKey)">
+          <button class="btn-play" v-if="seriesData.items.length > 0" @click="playMedia(seriesData.items[0].id)">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Play First
           </button>
         </div>
@@ -79,8 +81,20 @@ const handleDelete = async (itemId: string) => {
         <div class="episode-row" v-for="(item, index) in seriesData.items" :key="item.id">
           <div class="ep-number">{{ index + 1 }}</div>
           
-          <div class="ep-thumbnail" @click="playMedia(item.bucketKey)">
-            <div class="thumb-bg" :style="{ backgroundImage: item.mediaType === 'image' ? `url(${mediaStore.getMediaUrl(item.bucketKey)})` : 'none' }"></div>
+          <div class="ep-thumbnail" @click="playMedia(item.id)">
+            <img 
+              v-if="item.mediaType === 'image'" 
+              :src="mediaStore.getMediaUrl(item.bucketKey)" 
+              class="thumb-bg" 
+            />
+            <video 
+              v-else 
+              :src="mediaStore.getMediaUrl(item.bucketKey) + '#t=1.0'" 
+              preload="metadata" 
+              muted 
+              playsinline 
+              class="thumb-bg"
+            ></video>
             <div class="play-overlay">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             </div>
@@ -281,9 +295,9 @@ const handleDelete = async (itemId: string) => {
 }
 .thumb-bg {
   width: 100%; height: 100%;
-  background-size: cover;
-  background-position: center;
+  object-fit: cover;
   transition: opacity 0.2s;
+  display: block;
 }
 .play-overlay {
   position: absolute;

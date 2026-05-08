@@ -105,6 +105,25 @@ export const useMediaStore = defineStore('media', () => {
     }
   };
 
+  const updateMedia = async (id: string, payload: { title?: string; description?: string }) => {
+    loading.value = true;
+    message.value = "";
+    try {
+      await $fetch(`/api/media/${id}`, {
+        method: "PATCH",
+        body: payload,
+      });
+      message.value = "Memory updated.";
+      await refreshData();
+      return { success: true };
+    } catch (error) {
+      message.value = (error as Error).message;
+      return { error: true };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const addNote = async (mediaId: string, body: string) => {
     loading.value = true;
     message.value = "";
@@ -160,6 +179,7 @@ export const useMediaStore = defineStore('media', () => {
     refreshData,
     upload,
     deleteMedia,
+    updateMedia,
     addNote,
     getMediaUrl,
     groupedByCategory,

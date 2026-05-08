@@ -19,8 +19,9 @@ const isScrolled = computed(() => y.value > 0)
       <NuxtLink to="/" class="logo-link"><h1 class="logo">SVFlix</h1></NuxtLink>
       <ul v-if="username" class="nav-links">
         <li><NuxtLink to="/" exact-active-class="active">Home</NuxtLink></li>
-        <li><a href="#">Categories</a></li>
-        <li><a href="#">Recent</a></li>
+        <li><NuxtLink to="/categories" exact-active-class="active">Categories</NuxtLink></li>
+        <li><NuxtLink to="/images" exact-active-class="active">Images</NuxtLink></li>
+        <li><NuxtLink to="/videos" exact-active-class="active">Videos</NuxtLink></li>
       </ul>
     </div>
     
@@ -134,5 +135,45 @@ const isScrolled = computed(() => y.value > 0)
 .logout-btn:hover {
   background: #fff;
   color: #141414;
+}
+
+@media screen and (max-width: 800px) {
+  .navbar-left {
+    gap: 15px;
+  }
+  .nav-links {
+    gap: 12px;
+  }
+  .nav-links a {
+    font-size: 0.8rem;
+  }
+  .logo {
+    font-size: 1.4rem;
+  }
+  .username {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .navbar {
+    padding: 0 10px;
+  }
+  .navbar-left {
+    gap: 10px;
+  }
+  .nav-links {
+    gap: 8px;
+  }
+  .nav-links a {
+    font-size: 0.7rem;
+  }
+  .logo {
+    font-size: 1.2rem;
+  }
+  .logout-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
 }
 </style>

@@ -11,20 +11,27 @@ const emit = defineEmits<{
 
 const mediaStore = useMediaStore()
 
-const bgImage = computed(() => {
-  if (!props.item) return ''
-  // For videos, in a real app we'd auto-play it or show a specific thumbnail.
-  // We'll just use a generic background if it's a video and doesn't have an explicit thumbnail.
-  if (props.item.mediaType === 'image') {
-    return mediaStore.getMediaUrl(props.item.bucketKey)
-  }
-  return 'https://images.unsplash.com/photo-1574267432553-4b462808152a?auto=format&fit=crop&w=1920&q=80' // placeholder for videos
-})
+// Hero handles media items by rendering them as immersive backgrounds.
 </script>
 
 <template>
   <div class="hero" v-if="item">
-    <div class="hero-bg" :style="{ backgroundImage: `url(${bgImage})` }">
+    <div class="hero-bg">
+      <img 
+        v-if="item.mediaType === 'image'" 
+        :src="mediaStore.getMediaUrl(item.bucketKey)" 
+        class="hero-media" 
+      />
+      <video 
+        v-else 
+        :src="mediaStore.getMediaUrl(item.bucketKey)" 
+        preload="auto" 
+        muted 
+        playsinline 
+        autoplay 
+        loop 
+        class="hero-media"
+      ></video>
       <div class="hero-vignette"></div>
     </div>
     
@@ -33,7 +40,7 @@ const bgImage = computed(() => {
       <p class="hero-description">{{ item.description || "A special memory saved in the vault." }}</p>
       
       <div class="hero-actions">
-        <button class="btn btn-play" @click="emit('play', item.bucketKey)">
+        <button class="btn btn-play" @click="emit('play', item.id)">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           Play
         </button>
@@ -76,9 +83,15 @@ const bgImage = computed(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-size: cover;
-  background-position: center 20%;
   z-index: 1;
+  overflow: hidden;
+}
+
+.hero-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
 }
 
 .hero-vignette {

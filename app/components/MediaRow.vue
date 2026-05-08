@@ -8,7 +8,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   play: [key: string]
-  delete: [id: string]
 }>()
 
 const rowRef = ref<HTMLElement | null>(null)
@@ -36,7 +35,7 @@ const scrollRight = () => {
       
       <div class="slider" ref="rowRef">
         <div v-for="item in items" :key="item.id" class="slider-item">
-          <MediaCard :item="item" @play="(k) => emit('play', k)" @delete="(id) => emit('delete', id)" />
+          <MediaCard :item="item" @play="(k) => emit('play', k)" />
         </div>
       </div>
       

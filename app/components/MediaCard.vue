@@ -6,21 +6,17 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  play: [key: string]
-  delete: [id: string]
+  play: [id: string]
 }>()
 
+const router = useRouter()
 const mediaStore = useMediaStore()
 
-const mediaUrl = computed(() => mediaStore.getMediaUrl(props.item.bucketKey))
 const isHovered = ref(false)
 
-const thumbnailStyle = computed(() => {
-  if (props.item.mediaType === 'image') {
-    return { backgroundImage: `url(${mediaUrl.value})` }
-  }
-  return { backgroundImage: `linear-gradient(to bottom, #222, #000)` }
-})
+const playMedia = () => {
+  emit('play', props.item.id)
+}
 </script>
 
 <template>
@@ -28,8 +24,22 @@ const thumbnailStyle = computed(() => {
     class="media-card" 
     @mouseenter="isHovered = true" 
     @mouseleave="isHovered = false"
+    @click="playMedia"
   >
-    <div class="card-thumbnail" :style="thumbnailStyle">
+    <div class="card-thumbnail">
+      <img 
+        v-if="item.mediaType === 'image'" 
+        :src="mediaStore.getMediaUrl(item.bucketKey)" 
+        class="thumb-media" 
+      />
+      <video 
+        v-else 
+        :src="mediaStore.getMediaUrl(item.bucketKey) + '#t=1.0'" 
+        preload="metadata" 
+        muted 
+        playsinline 
+        class="thumb-media"
+      ></video>
       <div v-if="item.mediaType === 'video'" class="video-indicator">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </div>
@@ -38,19 +48,13 @@ const thumbnailStyle = computed(() => {
     <div class="card-details">
       <div class="actions-row">
         <div class="actions-left">
-          <button class="btn-circle play-btn" @click.stop="emit('play', item.bucketKey)" title="Play">
+          <button class="btn-circle play-btn" @click.stop="emit('play', item.id)" title="Play">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           </button>
           
-          <a class="btn-circle outline-btn" :href="mediaUrl" download title="Download">
+          <a class="btn-circle outline-btn" :href="mediaStore.getMediaUrl(item.bucketKey)" download title="Download">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
           </a>
-        </div>
-
-        <div class="actions-right">
-          <button class="btn-circle outline-btn delete-btn" @click.stop="emit('delete', item.id)" title="Delete">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-          </button>
         </div>
       </div>
       
@@ -93,13 +97,17 @@ const thumbnailStyle = computed(() => {
 
 .card-thumbnail {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-size: cover;
-  background-position: center;
-  transition: opacity 0.3s;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 4px;
+  transition: border-radius 0.3s, opacity 0.3s;
+  overflow: hidden;
+}
+
+.thumb-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .media-card:hover .card-thumbnail {

@@ -6,12 +6,10 @@ import SeriesRow from '../components/SeriesRow.vue'
 const mediaStore = useMediaStore()
 const { mediaItems, groupedByCategory, groupedByDate } = storeToRefs(mediaStore)
 
-const playMedia = (key: string) => {
-  window.open(mediaStore.getMediaUrl(key), '_blank')
-}
+const router = useRouter()
 
-const handleDelete = async (id: string) => {
-  await mediaStore.deleteMedia(id)
+const playMedia = (id: string) => {
+  router.push(`/watch/${id}`)
 }
 
 const featuredItem = computed(() => {
@@ -25,7 +23,7 @@ const featuredItem = computed(() => {
 
     <div class="rails-container">
       <!-- Recently Added (Raw items) -->
-      <MediaRow title="Recently Added" :items="mediaItems.slice(0, 15)" @play="playMedia" @delete="handleDelete" />
+      <MediaRow title="Recently Added" :items="mediaItems.slice(0, 15)" @play="playMedia" />
       
       <!-- Collections as Web Series -->
       <SeriesRow title="Collections" :groups="groupedByCategory" type="category" />

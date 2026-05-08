@@ -103,13 +103,14 @@ export const uploadObject = async (event: H3Event, key: string, body: Buffer, co
   return { bucket, key, size: body.length };
 };
 
-export const getObject = async (event: H3Event, key: string) => {
+export const getObject = async (event: H3Event, key: string, range?: string) => {
   const { client, bucket } = createBucket0Client(event);
 
   const response = await client.send(
     new GetObjectCommand({
       Bucket: bucket,
       Key: key,
+      Range: range,
     }),
   );
 
