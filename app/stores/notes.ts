@@ -24,7 +24,7 @@ export const useNotesStore = defineStore('notes', () => {
   const mediaStore = useMediaStore()
 
   const unreadCount = computed(() =>
-    notes.value.filter(n => n.isRead === 'false' && n.authorId !== authStore.currentUser?.id).length
+    notes.value.filter(n => n.isRead === 'false' && n.authorUsername !== authStore.currentUser?.username).length
   )
 
   const fetchNotes = async () => {

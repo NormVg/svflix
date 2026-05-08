@@ -60,47 +60,49 @@ onMounted(() => {
     </Transition>
 
     <div class="main-content" :class="{ blurred: showIntro }">
-      <!-- LOGIN VIEW -->
-      <div v-if="!currentUser" class="login-view">
-        <div class="login-bg"></div>
-        <div class="login-overlay"></div>
-        
-        <div class="login-header">
-          <h1 class="logo">SVFlix</h1>
-        </div>
+      <ClientOnly>
+        <!-- LOGIN VIEW -->
+        <div v-if="!currentUser" class="login-view">
+          <div class="login-bg"></div>
+          <div class="login-overlay"></div>
+          
+          <div class="login-header">
+            <h1 class="logo">SVFlix</h1>
+          </div>
 
-        <div class="login-box">
-          <h2>Sign In</h2>
-          <form @submit.prevent="handleLogin" class="login-form">
-            <div class="input-group">
-              <input v-model="username" type="text" placeholder="Username" required />
+          <div class="login-box">
+            <h2>Sign In</h2>
+            <form @submit.prevent="handleLogin" class="login-form">
+              <div class="input-group">
+                <input v-model="username" type="text" placeholder="Username" required />
+              </div>
+              <div class="input-group">
+                <input v-model="password" type="password" placeholder="Shared Password" required />
+              </div>
+              <button type="submit" class="btn-signin" :disabled="authLoading">
+                {{ authLoading ? 'Signing In...' : 'Sign In' }}
+              </button>
+              <p v-if="authMessage" class="error-msg">{{ authMessage }}</p>
+            </form>
+            <div class="login-footer">
+              <p>Private space for you both.</p>
+              <p>Save photos, videos, and notes securely.</p>
             </div>
-            <div class="input-group">
-              <input v-model="password" type="password" placeholder="Shared Password" required />
-            </div>
-            <button type="submit" class="btn-signin" :disabled="authLoading">
-              {{ authLoading ? 'Signing In...' : 'Sign In' }}
-            </button>
-            <p v-if="authMessage" class="error-msg">{{ authMessage }}</p>
-          </form>
-          <div class="login-footer">
-            <p>Private space for you both.</p>
-            <p>Save photos, videos, and notes securely.</p>
           </div>
         </div>
-      </div>
 
-      <!-- MAIN APP VIEW -->
-      <template v-else>
-        <!-- Main Layout with Router View -->
-        <NavBar v-if="!$route.path.startsWith('/watch')" :username="currentUser?.username" :unread-count="unreadCount" @logout="handleLogout" />
-        <NuxtPage />
+        <!-- MAIN APP VIEW -->
+        <template v-else>
+          <!-- Main Layout with Router View -->
+          <NavBar v-if="!$route.path.startsWith('/watch')" :username="currentUser?.username" :unread-count="unreadCount" @logout="handleLogout" />
+          <NuxtPage />
 
-        <!-- Floating Add Button -> Now navigates to /upload -->
-        <NuxtLink v-if="!$route.path.startsWith('/watch')" to="/upload" class="fab" title="Add Memory">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        </NuxtLink>
-      </template>
+          <!-- Floating Add Button -> Now navigates to /upload -->
+          <NuxtLink v-if="!$route.path.startsWith('/watch')" to="/upload" class="fab" title="Add Memory">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          </NuxtLink>
+        </template>
+      </ClientOnly>
     </div>
   </div>
 </template>
@@ -174,9 +176,11 @@ body::-webkit-scrollbar-thumb:hover {
 .login-bg {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-image: url('https://assets.nflxext.com/ffe/siteui/vlv3/9d3533b2-0e2b-40b2-95e0-eca797977fa2/f9a888c7-da11-4f11-9a70-8b17b6dc1969/US-en-20240311-popsignuptwoweeks-perspective_alpha_website_large.jpg');
-  background-size: cover;
-  background-position: center;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(229, 9, 20, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(77, 144, 254, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(229, 9, 20, 0.06) 0%, transparent 45%),
+    linear-gradient(135deg, #0a0a0a 0%, #1a1510 40%, #0d0d0d 100%);
   z-index: 1;
 }
 

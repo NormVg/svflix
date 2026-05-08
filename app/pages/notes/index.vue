@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useNotesStore } from '../stores/notes'
+import { useNotesStore } from '../../stores/notes'
 
-const router = useRouter()
 const notesStore = useNotesStore()
 const { notes, loading } = storeToRefs(notesStore)
 
-await notesStore.fetchNotes()
+onMounted(() => {
+  notesStore.fetchNotes()
+})
 </script>
 
 <template>

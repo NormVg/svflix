@@ -12,9 +12,11 @@ const mediaStore = useMediaStore()
 
 const { notes } = storeToRefs(notesStore)
 
-if (!notes.value.length) {
-  await notesStore.fetchNotes()
-}
+onMounted(() => {
+  if (!notes.value.length) {
+    notesStore.fetchNotes()
+  }
+})
 
 const note = computed(() => notes.value.find(n => n.id === route.params.id))
 
@@ -24,7 +26,7 @@ onMounted(async () => {
   }
 })
 
-const isMine = computed(() => note.value?.authorId === authStore.currentUser?.id)
+const isMine = computed(() => note.value?.authorUsername === authStore.currentUser?.username)
 
 const formattedDate = computed(() => {
   if (!note.value) return ''
@@ -52,10 +54,11 @@ onMounted(() => {
 
       <!-- The Letter -->
       <div class="letter-wrap" :class="{ 'is-unfolded': isUnfolded }">
-        <!-- Letter top fold -->
-        <div class="letter-fold-top" :class="isMine ? 'fold-mine' : 'fold-theirs'">
-          <div class="fold-triangle"></div>
-        </div>
+        <!-- Envelope Top Flap -->
+        <div class="envelope-top" :class="isMine ? 'env-mine' : 'env-theirs'"></div>
+        
+        <!-- Envelope Bottom Pocket -->
+        <div class="envelope-bottom" :class="isMine ? 'env-mine' : 'env-theirs'"></div>
 
         <!-- Letter body -->
         <div class="letter-body">
@@ -97,10 +100,18 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Signature -->
-          <div class="letter-signature">
-            <div class="sig-line"></div>
-            <p>{{ note.authorDisplayName || note.authorUsername }} 🤍</p>
+          <!-- Signature & Status -->
+          <div class="letter-footer">
+            <div class="read-status" v-if="isMine">
+              <span v-if="note.isRead === 'true'" class="status-read">✓✓ Seen</span>
+              <span v-else class="status-delivered">✓ Delivered</span>
+            </div>
+            <div v-else></div> <!-- spacer -->
+
+            <div class="letter-signature">
+              <div class="sig-line"></div>
+              <p>{{ note.authorDisplayName || note.authorUsername }} 🤍</p>
+            </div>
           </div>
         </div>
       </div>
@@ -152,54 +163,97 @@ onMounted(() => {
 /* ── The letter unfold ── */
 .letter-wrap {
   width: 100%;
-  transform-origin: top center;
-  transform: scaleY(0.08) translateY(-40px);
-  opacity: 0;
-  transition:
-    transform 0.7s cubic-bezier(0.34, 1.2, 0.64, 1),
-    opacity 0.4s ease;
-  filter: blur(2px);
-}
-
-.letter-wrap.is-unfolded {
-  transform: scaleY(1) translateY(0);
-  opacity: 1;
-  filter: blur(0);
-}
-
-/* Fold flap at the top (envelope seal look) */
-.letter-fold-top {
-  width: 100%;
-  height: 28px;
-  border-radius: 10px 10px 0 0;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  perspective: 1000px;
 }
-.fold-theirs { background: linear-gradient(135deg, #e50914, #c0392b); }
-.fold-mine   { background: linear-gradient(135deg, #2563eb, #4d90fe); }
 
-.fold-triangle {
-  width: 0;
-  height: 0;
-  border-left: 40px solid transparent;
-  border-right: 40px solid transparent;
-  border-top: 28px solid rgba(0,0,0,0.25);
+/* Envelope parts overlaying the letter */
+.envelope-top {
+  position: absolute;
+  top: -10px; left: -10px; right: -10px;
+  height: 45%;
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+  transition: transform 0.8s cubic-bezier(0.5, 0, 0, 1), opacity 0.6s ease;
+  pointer-events: none;
+}
+.envelope-top::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  height: 80px;
+  clip-path: polygon(0 0, 50% 100%, 100% 0);
+}
+
+.envelope-bottom {
+  position: absolute;
+  bottom: -10px; left: -10px; right: -10px;
+  height: 60%;
+  z-index: 11;
+  border-radius: 0 0 12px 12px;
+  transition: transform 0.8s cubic-bezier(0.5, 0, 0, 1), opacity 0.6s ease;
+  pointer-events: none;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+}
+.envelope-bottom::before {
+  content: '';
+  position: absolute;
+  bottom: 100%; left: 0; right: 0;
+  height: 40px;
+  clip-path: polygon(0 100%, 50% 0, 100% 100%);
+}
+
+/* Envelope Colors */
+.env-theirs { background: #b80710; }
+.env-theirs::before { background: #b80710; }
+.env-theirs.envelope-top { background: #e50914; }
+.env-theirs.envelope-top::after { background: #e50914; }
+
+.env-mine { background: #1d4ed8; }
+.env-mine::before { background: #1d4ed8; }
+.env-mine.envelope-top { background: #2563eb; }
+.env-mine.envelope-top::after { background: #2563eb; }
+
+/* The opened state */
+.letter-wrap.is-unfolded .envelope-top {
+  transform: translateY(-60px) scale(1.02);
+  opacity: 0;
+}
+.letter-wrap.is-unfolded .envelope-bottom {
+  transform: translateY(60px) scale(1.02);
+  opacity: 0;
 }
 
 /* Letter paper */
 .letter-body {
-  background: #1e1b17;
-  border: 1px solid #35302a;
-  border-top: none;
-  border-radius: 0 0 12px 12px;
+  background: #fdfaf6;
+  border: 1px solid #e8e3d8;
+  border-radius: 12px;
   padding: 32px 36px 36px;
+  opacity: 0;
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.8s ease;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 4px 0 #0a0908;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 4px 0 #0a0908, inset 0 0 40px rgba(139,115,85,0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.letter-wrap.is-unfolded .letter-body {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* Subtle paper texture overlay */
+.letter-body::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAiLz4KPHBhdGggZD0iTTAgMEwyIDJNMCAyTDIgMCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utb3BhY2l0eT0iMC4wMiIgc3Ryb2tlLXdpZHRoPSIwLjUiLz4KPC9zdmc+');
+  pointer-events: none;
+  opacity: 0.8;
 }
 
 @media (max-width: 480px) {
@@ -208,6 +262,8 @@ onMounted(() => {
 
 /* Header */
 .letter-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -227,33 +283,34 @@ onMounted(() => {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-mine   { background: #4d90fe; box-shadow: 0 0 8px rgba(77,144,254,0.5); }
-.dot-theirs { background: #e50914; box-shadow: 0 0 8px rgba(229,9,20,0.5); }
+.dot-mine   { background: #4d90fe; box-shadow: 0 0 8px rgba(77,144,254,0.4); }
+.dot-theirs { background: #e50914; box-shadow: 0 0 8px rgba(229,9,20,0.4); }
 
 .from-label {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #666;
+  color: #9c8e81;
 }
 .from-name {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #e5e5e5;
+  color: #2c2825;
 }
 
 .letter-date {
   font-size: 0.8rem;
-  color: #666;
+  color: #887b6d;
   text-align: right;
   font-style: italic;
 }
 
 .letter-divider {
-  text-align: center;
-  color: #3a3530;
-  font-size: 1.2rem;
   position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #b5a99c;
+  font-size: 1.2rem;
 }
 .letter-divider::before,
 .letter-divider::after {
@@ -262,15 +319,17 @@ onMounted(() => {
   top: 50%;
   width: 40%;
   height: 1px;
-  background: #2a2520;
+  background: #e8e3d8;
 }
 .letter-divider::before { left: 0; }
 .letter-divider::after { right: 0; }
 
 /* The actual note text */
 .letter-text {
+  position: relative;
+  z-index: 1;
   font-size: 1.15rem;
-  color: #ccc;
+  color: #2c2825;
   line-height: 1.85;
   font-family: 'Georgia', serif;
   font-style: italic;
@@ -280,36 +339,60 @@ onMounted(() => {
 
 /* Attached media */
 .attached-media {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 .media-label-top {
   font-size: 0.8rem;
-  color: #777;
+  color: #887b6d;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .media-frame {
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #2e2a25;
+  border: 1px solid #e8e3d8;
+  background: #f4efea;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 .media-img {
   width: 100%;
   max-height: 400px;
   object-fit: cover;
   display: block;
+  border-radius: 4px;
 }
 .media-caption {
-  padding: 8px 12px;
-  font-size: 0.82rem;
-  color: #888;
-  background: #111;
+  padding: 10px 4px 4px;
+  font-size: 0.85rem;
+  color: #544b41;
   font-style: italic;
+  text-align: center;
 }
 
-/* Signature */
+/* Footer: Signature & Status */
+.letter-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 20px;
+}
+
+.read-status {
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.status-delivered { color: #9c8e81; }
+.status-read { color: #4d90fe; font-weight: 600; }
+
 .letter-signature {
   display: flex;
   flex-direction: column;
@@ -319,11 +402,11 @@ onMounted(() => {
 .sig-line {
   width: 60px;
   height: 1px;
-  background: #3a3530;
+  background: #d8cebf;
 }
 .letter-signature p {
   font-size: 0.95rem;
-  color: #888;
+  color: #544b41;
   font-family: 'Georgia', serif;
   font-style: italic;
 }

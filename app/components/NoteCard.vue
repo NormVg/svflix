@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/auth'
 const props = defineProps<{ note: LoveNote }>()
 const authStore = useAuthStore()
 
-const isMine = computed(() => props.note.authorId === authStore.currentUser?.id)
+const isMine = computed(() => props.note.authorUsername === authStore.currentUser?.username)
 const isUnread = computed(() => props.note.isRead === 'false' && !isMine.value)
 
 const formattedDate = computed(() => {
@@ -14,10 +14,6 @@ const formattedDate = computed(() => {
     ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 })
 
-const preview = computed(() => {
-  const text = props.note.body
-  return text.length > 80 ? text.slice(0, 80).trimEnd() + '…' : text
-})
 </script>
 
 <template>
@@ -35,14 +31,19 @@ const preview = computed(() => {
         <span class="note-date">{{ formattedDate }}</span>
       </div>
 
-      <p class="note-preview">{{ preview }}</p>
-
       <div class="note-footer">
         <span v-if="note.mediaBucketKey" class="has-media">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
           Memory attached
         </span>
-        <span class="open-hint">Open →</span>
+        <span v-else></span> <!-- spacer -->
+        
+        <div class="footer-right">
+          <span v-if="isMine" class="read-receipt" :class="{ 'is-read': note.isRead === 'true' }">
+            {{ note.isRead === 'true' ? '✓✓ Read' : '✓ Delivered' }}
+          </span>
+          <span class="open-hint">Open →</span>
+        </div>
       </div>
     </div>
   </NuxtLink>
@@ -144,20 +145,29 @@ const preview = computed(() => {
   color: #666;
 }
 
-.note-preview {
-  font-size: 0.92rem;
-  color: #999;
-  font-style: italic;
-  font-family: 'Georgia', serif;
-  line-height: 1.6;
-  margin: 0;
-}
+
 
 .note-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-top: 4px;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.read-receipt {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.read-receipt.is-read {
+  color: #4d90fe; /* Blue ticks */
 }
 
 .has-media {
