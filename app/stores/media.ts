@@ -140,6 +140,25 @@ export const useMediaStore = defineStore('media', () => {
     }
   };
 
+  const createCategory = async (name: string, description: string = '') => {
+    loading.value = true;
+    message.value = "";
+    try {
+      await $fetch('/api/categories', {
+        method: 'POST',
+        body: { name, description }
+      });
+      message.value = "Category created.";
+      await refreshData();
+      return { success: true };
+    } catch (error) {
+      message.value = (error as Error).message;
+      return { error: true };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const getMediaUrl = (key: string) =>
     `/api/bucket0/get?key=${encodeURIComponent(key)}`;
 
@@ -181,6 +200,7 @@ export const useMediaStore = defineStore('media', () => {
     deleteMedia,
     updateMedia,
     addNote,
+    createCategory,
     getMediaUrl,
     groupedByCategory,
     groupedByDate

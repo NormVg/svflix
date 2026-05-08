@@ -11,7 +11,7 @@ const mediaId = route.params.id as string
 const seriesId = route.query.series as string | undefined
 const seriesType = route.query.type as string | undefined
 
-const { mediaItems, groupedByCategory, groupedByDate } = storeToRefs(mediaStore)
+const { mediaItems, groupedByCategory, groupedByDate, categories } = storeToRefs(mediaStore)
 
 // Mouse idle tracking for hiding UI
 const showControls = ref(true)
@@ -21,7 +21,10 @@ const handleMouseMove = () => {
   showControls.value = true
   clearTimeout(idleTimeout)
   idleTimeout = setTimeout(() => {
-    showControls.value = false
+    // Only hide if we aren't editing or managing categories
+    if (!isEditing.value && !showCategoryMenu.value) {
+      showControls.value = false
+    }
   }, 3000)
 }
 
@@ -108,6 +111,21 @@ const goBack = () => {
   }
 }
 
+// Category Management
+const showCategoryMenu = ref(false)
+const currentCategoryIds = computed(() => currentItem.value?.categories.map(c => c.id) || [])
+
+const toggleCategory = async (categoryId: string) => {
+  if (!currentItem.value) return
+  let newIds = [...currentCategoryIds.value]
+  if (newIds.includes(categoryId)) {
+    newIds = newIds.filter(id => id !== categoryId)
+  } else {
+    newIds.push(categoryId)
+  }
+  await mediaStore.updateMedia(currentItem.value.id, { categoryIds: newIds })
+}
+
 // Auto-Play Next Episode Logic
 let autoNextTimer: NodeJS.Timeout
 
@@ -188,6 +206,7 @@ const toggleFullscreen = () => {
     class="watch-player" 
     :class="{ 'hide-cursor': !showControls }"
     v-if="currentItem"
+    @click="showCategoryMenu = false"
   >
     <!-- Media Renderer -->
     <div class="media-container">
@@ -247,6 +266,29 @@ const toggleFullscreen = () => {
           </div>
           
           <div class="top-right">
+            <div class="category-menu-wrapper">
+              <button class="control-btn action-btn" @click.stop="showCategoryMenu = !showCategoryMenu" title="Add to Collection">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z"/></svg>
+              </button>
+              <div v-if="showCategoryMenu" class="category-dropdown" @click.stop>
+                <h3>Collections</h3>
+                <div class="category-list">
+                  <label v-for="cat in categories" :key="cat.id" class="category-option">
+                    <input 
+                      type="checkbox" 
+                      :checked="currentCategoryIds.includes(cat.id)" 
+                      @change="toggleCategory(cat.id)" 
+                      :disabled="mediaStore.loading"
+                    />
+                    <span class="checkmark"></span>
+                    {{ cat.name }}
+                  </label>
+                  <div v-if="categories.length === 0" class="no-categories">
+                    No collections yet.
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="ep-counter" v-if="seriesId">
               Episode {{ currentIndex + 1 }} of {{ playlist.length }}
             </div>
@@ -494,6 +536,66 @@ const toggleFullscreen = () => {
 .nav-arrow svg { width: 40px; height: 40px; }
 .nav-arrow.left { left: 0; border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
 .nav-arrow.right { right: 0; border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+
+.category-menu-wrapper {
+  position: relative;
+}
+
+.category-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 10px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  width: 250px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+  padding: 15px;
+  z-index: 1000;
+  cursor: default;
+}
+
+.category-dropdown h3 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  color: #fff;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+}
+
+.category-list {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ccc;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.category-option:hover {
+  color: #fff;
+}
+
+.category-option input {
+  cursor: pointer;
+}
+
+.no-categories {
+  color: #888;
+  font-size: 0.85rem;
+  font-style: italic;
+}
 
 .fade-enter-active,
 .fade-leave-active {
