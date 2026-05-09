@@ -229,33 +229,34 @@ const toggleFullscreen = () => {
 </script>
 
 <template>
-  <div 
-    class="watch-player" 
-    :class="{ 'hide-cursor': !showControls }"
-    v-if="currentItem"
-    @click="showCategoryMenu = false"
-  >
+  <div class="watch-page-root">
+    <div 
+      class="watch-player" 
+      :class="{ 'hide-cursor': !showControls }"
+      v-if="currentItem"
+      @click="showCategoryMenu = false"
+    >
     <!-- Media Renderer -->
     <div class="media-container">
       <div v-if="isLoadingMedia" class="large-spinner"></div>
-      <template v-else-if="mediaUrl">
-        <video 
-          v-if="currentItem.mediaType === 'video'" 
-          key="video"
-          :src="mediaUrl" 
-          controls 
-          autoplay 
-          class="media-content video-content"
-          @ended="onVideoEnded"
-        ></video>
-        <img 
-          v-else 
-          key="image"
-          :src="mediaUrl" 
-          alt="Memory" 
-          class="media-content image-content"
-        />
-      </template>
+      
+      <video 
+        v-if="!isLoadingMedia && mediaUrl && currentItem.mediaType === 'video'" 
+        key="video"
+        :src="mediaUrl" 
+        controls 
+        autoplay 
+        class="media-content video-content"
+        @ended="onVideoEnded"
+      ></video>
+      
+      <img 
+        v-if="!isLoadingMedia && mediaUrl && currentItem.mediaType === 'image'" 
+        key="image"
+        :src="mediaUrl" 
+        alt="Memory" 
+        class="media-content image-content"
+      />
     </div>
 
     <!-- UI Overlay -->
@@ -347,6 +348,7 @@ const toggleFullscreen = () => {
   <div v-else class="not-found">
     <h2>Memory not found.</h2>
     <button @click="router.push('/')">Go Home</button>
+  </div>
   </div>
 </template>
 
