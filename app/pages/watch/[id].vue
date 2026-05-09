@@ -46,20 +46,33 @@ const currentItem = computed(() => {
 const mediaUrl = ref<string>('')
 const isLoadingMedia = ref(false)
 
-watch(currentItem, async (newItem) => {
-  if (!newItem) {
+const loadCurrentMedia = async () => {
+  const item = currentItem.value
+  if (!item) {
     mediaUrl.value = ''
     return
   }
   isLoadingMedia.value = true
   try {
-    mediaUrl.value = await mediaStore.loadMediaBlob(newItem.bucketKey)
+    mediaUrl.value = await mediaStore.loadMediaBlob(item.bucketKey)
   } catch (err) {
     console.error('Failed to load media blob:', err)
   } finally {
     isLoadingMedia.value = false
   }
-}, { immediate: true })
+}
+
+// Only load on client side — fetch/blob APIs don't exist during SSR
+onMounted(() => {
+  loadCurrentMedia()
+})
+
+// Reload when navigating between items in a playlist
+watch(currentItem, () => {
+  if (import.meta.client) {
+    loadCurrentMedia()
+  }
+})
 
 // Playlist / Series logic
 const playlist = computed(() => {
