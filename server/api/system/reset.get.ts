@@ -6,7 +6,8 @@ import {
   mediaItems, 
   mediaNotes, 
   mediaCategories, 
-  loveNotes 
+  loveNotes,
+  systemSettings
 } from "../../db/schema";
 import { requireUser } from "../../utils/auth";
 
@@ -33,7 +34,13 @@ export default defineEventHandler(async (event) => {
     await db.delete(categories);
     await db.delete(appUsers);
 
-    // 3. Re-seed from ENV
+    // 3. Log reset time to clear chat history
+    await db
+      .insert(systemSettings)
+      .values({ id: 'global', lastResetAt: new Date() })
+      .onConflictDoUpdate({ target: systemSettings.id, set: { lastResetAt: new Date() } });
+
+    // 4. Re-seed from ENV
     const usersRaw = process.env.APP_AUTH_USERS || "";
     const usernames = usersRaw
       .split(",")

@@ -63,9 +63,7 @@ export const useChatStore = defineStore('chat', () => {
       // Wait until attached to ensure we don't miss messages
       await currentRoom.attach()
       
-      // Fetch history
-      const { items } = await currentRoom.messages.history({ limit: 50 })
-      messages.value = items.reverse()
+      // No history fetch — messages are strictly ephemeral in-memory
 
     } catch (error) {
       console.error('Failed to initialize chat:', error)

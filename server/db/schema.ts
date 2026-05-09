@@ -18,6 +18,11 @@ export const appUsers = pgTable("app_users", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const systemSettings = pgTable("system_settings", {
+  id: text("id").primaryKey(),
+  lastResetAt: timestamp("last_reset_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const categories = pgTable("categories", {
   id: uuid("id").defaultRandom().primaryKey(),
   slug: text("slug").notNull().unique(),

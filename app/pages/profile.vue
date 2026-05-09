@@ -14,6 +14,18 @@ const { mediaItems } = storeToRefs(mediaStore)
 const totalMemories = computed(() => mediaItems.value.length)
 const videoCount = computed(() => mediaItems.value.filter(m => m.mediaType === 'video').length)
 const imageCount = computed(() => mediaItems.value.filter(m => m.mediaType === 'image').length)
+
+const resetSystem = async () => {
+  if (confirm("WARNING: This will delete ALL media, categories, and chat history. Are you absolutely sure?")) {
+    try {
+      await $fetch('/api/system/reset')
+      alert("System has been fully reset. You will be signed out.")
+      await authStore.logout()
+    } catch (e) {
+      alert("Failed to reset system.")
+    }
+  }
+}
 </script>
 
 <template>
@@ -61,6 +73,13 @@ const imageCount = computed(() => mediaItems.value.filter(m => m.mediaType === '
           <button class="btn-outline" @click="router.push('/upload')">Upload New Memories</button>
           <button class="btn-outline" @click="router.push('/categories')">Manage Collections</button>
           <button class="btn-outline text-red" @click="authStore.logout()">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h2>Danger Zone</h2>
+        <div class="settings-actions">
+          <button class="btn-outline text-red" @click="resetSystem">Full System Reset</button>
         </div>
       </div>
     </div>
