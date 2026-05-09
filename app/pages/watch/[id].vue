@@ -7,7 +7,7 @@ const route = useRoute()
 const router = useRouter()
 const mediaStore = useMediaStore()
 
-const mediaId = route.params.id as string
+const mediaId = computed(() => route.params.id as string)
 const seriesId = route.query.series as string | undefined
 const seriesType = route.query.type as string | undefined
 
@@ -40,7 +40,7 @@ onUnmounted(() => {
 
 // Current Item logic
 const currentItem = computed(() => {
-  return mediaItems.value.find(item => item.id === mediaId)
+  return mediaItems.value.find(item => item.id === mediaId.value)
 })
 
 const mediaUrl = ref<string>('')
@@ -62,14 +62,14 @@ const loadCurrentMedia = async () => {
   }
 }
 
-// Only load on client side — fetch/blob APIs don't exist during SSR
+// Load media on mount
 onMounted(() => {
   loadCurrentMedia()
 })
 
-// Reload when navigating between items in a playlist
-watch(currentItem, () => {
-  if (import.meta.client) {
+// Reload when currentItem changes (playlist navigation or when store data arrives after mount)
+watch(currentItem, (newItem, oldItem) => {
+  if (newItem && newItem !== oldItem) {
     loadCurrentMedia()
   }
 })
@@ -348,7 +348,7 @@ const toggleFullscreen = () => {
           </div>
         </div>
 
-        <!-- Navigation Arrows (Side) -->
+        <!-- Navigation Arrows (Side) — outside controls so they're positioned against .watch-player -->
         <button v-if="hasPrev" class="nav-arrow left" @click="goPrev" title="Previous Episode">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
         </button>
@@ -416,6 +416,7 @@ const toggleFullscreen = () => {
 .player-controls {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
   pointer-events: none; /* Let clicks pass through to media except for buttons */
 }
 
