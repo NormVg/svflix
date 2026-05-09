@@ -202,7 +202,7 @@ onMounted(() => {
       </button>
       <video
         ref="videoRef"
-        :src="videoUrl ?? undefined"
+        :src="videoUrl ? videoUrl : undefined"
         class="player-video"
         @timeupdate="onTimeUpdate"
         @loadedmetadata="onLoadedMetadata"
