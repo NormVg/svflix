@@ -94,11 +94,11 @@ onMounted(() => {
         <!-- MAIN APP VIEW -->
         <template v-else>
           <!-- Main Layout with Router View -->
-          <NavBar v-if="!$route.path.startsWith('/watch')" :username="currentUser?.username" :unread-count="unreadCount" @logout="handleLogout" />
+          <NavBar v-if="!$route.path.startsWith('/watch') && !$route.path.startsWith('/watch-together')" :username="currentUser?.username" :unread-count="unreadCount" @logout="handleLogout" />
           <NuxtPage />
 
           <!-- Floating Add Button -> Now navigates to /upload -->
-          <NuxtLink v-if="!$route.path.startsWith('/watch')" to="/upload" class="fab" title="Add Memory">
+          <NuxtLink v-if="!$route.path.startsWith('/watch') && !$route.path.startsWith('/chat') && !$route.path.startsWith('/watch-together')" to="/upload" class="fab" title="Add Memory">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           </NuxtLink>
         </template>

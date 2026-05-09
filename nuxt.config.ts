@@ -16,4 +16,12 @@ export default defineNuxtConfig({
     appAuthPassword: process.env.APP_AUTH_PASSWORD,
     appAuthSessionSecret: process.env.APP_AUTH_SESSION_SECRET,
   },
+  nitro: {
+    // Raise body size limit to 800MB for the watch-together video upload endpoint
+    routeRules: {
+      '/api/watch-together/upload': {
+        headers: { 'x-nitro-body-size-limit': '838860800' }
+      }
+    }
+  }
 })

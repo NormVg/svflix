@@ -23,6 +23,8 @@ const isScrolled = computed(() => y.value > 0)
         <li><NuxtLink to="/categories" exact-active-class="active">Categories</NuxtLink></li>
         <li><NuxtLink to="/images" exact-active-class="active">Images</NuxtLink></li>
         <li><NuxtLink to="/videos" exact-active-class="active">Videos</NuxtLink></li>
+        <li><NuxtLink to="/chat" exact-active-class="active">Chat</NuxtLink></li>
+        <li><NuxtLink to="/watch-together" exact-active-class="active">Watch Together</NuxtLink></li>
         <li class="notes-link">
           <NuxtLink to="/notes" exact-active-class="active">
             Notes

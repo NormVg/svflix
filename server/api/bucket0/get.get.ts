@@ -9,8 +9,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: "Query param 'key' is required." });
     }
 
-    const range = getRequestHeader(event, "Range");
-    const result = await getObject(event, key, range);
+    // Intentionally DO NOT pass the Range header to getObject. 
+    // The s3.bucket0.com proxy modifies headers which breaks the AWS V4 signature 
+    // if Range is included in the signed headers, resulting in a 403 Access Denied.
+    const result = await getObject(event, key);
     const body = result.response.Body;
 
     if (!body) {
@@ -23,11 +25,6 @@ export default defineEventHandler(async (event) => {
       "cache-control": "public, max-age=31536000",
     };
 
-    if (result.response.ContentRange) {
-      headers["content-range"] = result.response.ContentRange;
-      setResponseStatus(event, 206);
-    }
-    
     if (result.response.ContentLength) {
       headers["content-length"] = result.response.ContentLength.toString();
     }
