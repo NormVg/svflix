@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "server/api/bucket0/upload.post.ts": {
+      "maxDuration": 60
+    }
+  }
+}

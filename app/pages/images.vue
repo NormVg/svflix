@@ -59,13 +59,25 @@ const playMedia = (id: string) => {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 20px 0;
+  overflow: visible;
+}
+
+@media screen and (max-width: 1400px) {
+  .gallery-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media screen and (max-width: 1100px) {
+  .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media screen and (max-width: 800px) {
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .grid-item {
-  /* MediaCard expects to be in a relative container */
   position: relative;
+  aspect-ratio: 16 / 9;
 }
 
 .empty-state {

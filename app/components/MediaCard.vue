@@ -34,19 +34,28 @@ const displayTitle = computed(() => {
     @click="playMedia"
   >
     <div class="card-thumbnail">
-      <img 
-        v-if="item.mediaType === 'image'" 
-        :src="mediaStore.getMediaUrl(item.bucketKey)" 
-        class="thumb-media" 
-      />
-      <video 
-        v-else 
-        :src="mediaStore.getMediaUrl(item.bucketKey) + '#t=1.0'" 
-        preload="metadata" 
-        muted 
-        playsinline 
-        class="thumb-media"
-      ></video>
+      <div v-if="item.mediaType === 'image'">
+        <img
+          :src="mediaStore.getMediaUrl(item.bucketKey)"
+          :alt="displayTitle"
+          class="thumb-media"
+          loading="lazy"
+        />
+      </div>
+      <div v-else>
+        <ClientOnly>
+          <video
+            :src="mediaStore.getMediaUrl(item.bucketKey) + '#t=1.0'"
+            preload="metadata"
+            muted
+            playsinline
+            class="thumb-media"
+          ></video>
+          <template #fallback>
+            <div class="thumb-media thumb-placeholder"></div>
+          </template>
+        </ClientOnly>
+      </div>
       <div v-if="item.mediaType === 'video'" class="video-indicator">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </div>
@@ -118,7 +127,12 @@ const displayTitle = computed(() => {
 }
 
 .media-card:hover .card-thumbnail {
-  opacity: 0.3; /* Darken thumbnail more on hover so text pops */
+  border-radius: 0 0 6px 6px;
+  opacity: 0.35;
+}
+
+.thumb-placeholder {
+  background: #1a1a1a;
 }
 
 .video-indicator {

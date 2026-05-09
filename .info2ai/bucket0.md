@@ -182,3 +182,75 @@ Anything that speaks S3 will work:
 - rclone, s3cmd, mc (MinIO client)
 - Cyberduck, Transmit, S3 Browser
 - Any S3-compatible library
+
+
+
+## AgentBucket API
+
+Base: `https://bucket0.com/api/agent-bucket`
+Auth: `Authorization: Bearer b0ak_...`
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /files/upload | Upload file (multipart/form-data) |
+| GET | /files?page=1&pageSize=50 | List files (paginated, max 100) |
+| GET | /files/download?key=path | Download file |
+| DELETE | /files?key=path | Delete file |
+| POST | /files/folder | Create folder |
+
+### Upload Response
+```json
+{ "success": true, "key": "research/results.json", "fileName": "results.json", "size": 2048, "destination": "agent" }
+```
+
+### List Response
+```json
+{
+  "files": [{ "key": "research/results.json", "fileName": "results.json", "size": 2048, "mimeType": "application/json", "isStarred": false, "uploadedVia": "key_id", "createdAt": "...", "updatedAt": "..." }],
+  "pagination": { "total": 25, "page": 1, "pageSize": 50, "hasMore": false }
+}
+```
+
+### Create Folder
+```json
+POST /files/folder { "path": "reports/daily" }
+→ { "success": true, "path": "reports/daily/" }
+```
+
+### Error Codes
+| Code | Meaning |
+|------|---------|
+| 400 | Missing file, filename, or invalid folder path |
+| 401 | Missing/invalid/expired API key |
+| 402 | Plan limit, storage quota, or file size exceeded |
+| 404 | File or user not found |
+| 429 | Rate limit (100 uploads/min). Check X-RateLimit-* headers |
+## Authentication
+
+### AgentBucket — Bearer Token
+
+1. Go to **Dashboard > AgentBucket > API Keys > New Key**
+2. Name your key and choose destination: **AgentBucket** (review files first) or **My Drive** (direct access)
+3. Copy the key — it's shown only once
+4. Copy the **API Guide** from the same tab and give it to your agent as a reference file for instant setup
+
+```
+Authorization: Bearer b0ak_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### S3 API — AWS Signature V4
+
+1. Go to **Dashboard > S3 API > Access Keys > Create Key**
+2. Copy the Access Key ID and Secret Access Key — shown only once
+3. Copy the **S3 API Integration Guide** from the same tab and give it to your agent
+
+```bash
+aws configure --profile bucket0
+AWS Access Key ID: <YOUR_ACCESS_KEY>       # format: B0IAXXXXXXXXXXXXXXXX
+AWS Secret Access Key: <YOUR_SECRET_KEY>
+Default region name: auto
+```
+
+Endpoint: `https://s3.bucket0.com`
