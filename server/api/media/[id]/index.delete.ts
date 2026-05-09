@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../../../db/client";
 import { mediaItems } from "../../../db/schema";
 import { requireDbUser } from "../../../utils/db-auth";
-import { deleteObject, handleBucket0Error } from "../../../utils/bucket0";
+import { deleteAgentBucketFile, handleAgentBucketError } from "../../../utils/agentBucket";
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
@@ -22,13 +22,17 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: "Media item not found for this user." });
     }
 
-    // Also delete from S3 bucket
+    // Also delete from AgentBucket
     if (deleted.bucketKey) {
-      await deleteObject(event, deleted.bucketKey);
+      try {
+        await deleteAgentBucketFile(deleted.bucketKey);
+      } catch (e) {
+        console.error("Failed to delete from AgentBucket (might be an old S3 file):", e);
+      }
     }
 
     return { deleted: true, item: deleted };
   } catch (error) {
-    handleBucket0Error(error);
+    throw createError({ statusCode: 500, statusMessage: "Internal server error." });
   }
 });

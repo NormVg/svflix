@@ -55,19 +55,36 @@ export const useMediaStore = defineStore('media', () => {
     loading.value = true;
     message.value = "";
     try {
+      const { key: agentKey } = await $fetch<{ key: string }>("/api/bucket0/agent-key");
+      
+      const safeName = payload.file.name.replace(/[^a-zA-Z0-9._/-]/g, "_");
+      const now = new Date().toISOString().slice(0, 10);
+      let finalKey = payload.key.trim();
+      if (!finalKey) {
+        finalKey = `uploads/${now}/${safeName}`;
+      } else if (finalKey.endsWith("/")) {
+        finalKey = `${finalKey}${safeName}`;
+      }
+
       const form = new FormData();
       form.append("file", payload.file);
-      if (payload.key.trim()) form.append("key", payload.key.trim());
+      form.append("filename", finalKey);
 
-      const uploadResult = await $fetch<{ key: string }>("/api/bucket0/upload", {
+      const uploadRes = await fetch("https://bucket0.com/api/agent-bucket/files/upload", {
         method: "POST",
-        body: form,
+        headers: { "Authorization": `Bearer ${agentKey}` },
+        body: form
       });
+
+      if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.statusText}`);
+
+      const data = await uploadRes.json();
+      const actualKey = data.key || finalKey;
 
       await $fetch("/api/media", {
         method: "POST",
         body: {
-          bucketKey: uploadResult.key,
+          bucketKey: actualKey,
           mediaType: payload.mediaType,
           title: payload.title,
           description: payload.description,
@@ -75,9 +92,9 @@ export const useMediaStore = defineStore('media', () => {
         },
       });
 
-      message.value = `Saved: ${uploadResult.key}`;
+      message.value = `Saved: ${actualKey}`;
       await refreshData();
-      return { success: true, key: uploadResult.key };
+      return { success: true, key: actualKey };
     } catch (error) {
       const err = error as Error & { statusCode?: number };
       if (err.statusCode === 401) {
@@ -86,6 +103,63 @@ export const useMediaStore = defineStore('media', () => {
       }
       message.value = err.message;
       return { error: true };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const bulkUpload = async (files: File[], opts: {
+    mediaType?: "image" | "video";
+    categoryIds?: string[];
+  } = {}) => {
+    loading.value = true;
+    message.value = `Uploading ${files.length} files...`;
+    try {
+      const { key: agentKey } = await $fetch<{ key: string }>("/api/bucket0/agent-key");
+      const now = new Date().toISOString().slice(0, 10);
+
+      const results = await Promise.all(
+        files.map(async (file) => {
+          const mediaType = opts.mediaType ?? (file.type.startsWith("video/") ? "video" : "image");
+          const safeName = file.name.replace(/[^a-zA-Z0-9._/-]/g, "_");
+          const finalKey = `uploads/${now}/${safeName}`;
+
+          const form = new FormData();
+          form.append("file", file);
+          form.append("filename", finalKey);
+
+          const uploadRes = await fetch("https://bucket0.com/api/agent-bucket/files/upload", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${agentKey}` },
+            body: form
+          });
+
+          if (!uploadRes.ok) throw new Error(`AgentBucket upload failed for ${file.name}`);
+          
+          const uploadData = await uploadRes.json();
+          const actualKey = uploadData.key || finalKey;
+
+          await $fetch("/api/media", {
+            method: "POST",
+            body: {
+              bucketKey: actualKey,
+              mediaType,
+              title: "",
+              description: "",
+              categoryIds: opts.categoryIds ?? [],
+            },
+          });
+
+          return { success: true, key: actualKey };
+        })
+      );
+
+      message.value = `Uploaded ${results.length} files.`;
+      await refreshData();
+      return results;
+    } catch (error) {
+      message.value = (error as Error).message;
+      return [];
     } finally {
       loading.value = false;
     }
@@ -160,7 +234,28 @@ export const useMediaStore = defineStore('media', () => {
   };
 
   const getMediaUrl = (key: string) =>
-    `/api/bucket0/get?key=${encodeURIComponent(key)}`;
+    `/api/media/proxy?key=${encodeURIComponent(key)}`;
+
+  const objectUrls = ref<Record<string, string>>({});
+  
+  const loadMediaBlob = async (key: string) => {
+    if (objectUrls.value[key]) return objectUrls.value[key];
+    
+    const { key: agentKey } = await $fetch<{ key: string }>("/api/bucket0/agent-key");
+    const response = await fetch(
+      `https://bucket0.com/api/agent-bucket/files/download?key=${encodeURIComponent(key)}`,
+      { headers: { Authorization: `Bearer ${agentKey}` } }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load media blob: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    objectUrls.value[key] = url;
+    return url;
+  };
 
   const groupedByCategory = computed(() =>
     categories.value.map((category) => ({
@@ -197,11 +292,13 @@ export const useMediaStore = defineStore('media', () => {
     message,
     refreshData,
     upload,
+    bulkUpload,
     deleteMedia,
     updateMedia,
     addNote,
     createCategory,
     getMediaUrl,
+    loadMediaBlob,
     groupedByCategory,
     groupedByDate
   };

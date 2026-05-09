@@ -20,7 +20,20 @@ onUnmounted(() => store.cleanup())
 // ── Video element ─────────────────────────────────────────────────────────
 const videoRef = ref<HTMLVideoElement | null>(null)
 watch(videoRef, (el) => { if (el) store.attachVideo(el) })
-const videoUrl = computed(() => store.videoKey ? mediaStore.getMediaUrl(store.videoKey) : null)
+const videoUrl = ref<string | null>(null)
+
+watch(() => store.videoKey, async (key) => {
+  if (key) {
+    try {
+      videoUrl.value = await mediaStore.loadMediaBlob(key)
+    } catch (e) {
+      console.error('Failed to load video blob:', e)
+      videoUrl.value = null
+    }
+  } else {
+    videoUrl.value = null
+  }
+}, { immediate: true })
 
 // ── Upload ────────────────────────────────────────────────────────────────
 const uploading = ref(false)
@@ -35,21 +48,35 @@ const handleFileSelect = async (e: Event) => {
 
   uploading.value = true; uploadError.value = null; uploadProgress.value = 0
   try {
+    const { key: agentKey } = await $fetch<{ key: string }>("/api/bucket0/agent-key");
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4'
+    const finalKey = `temp/watch-together-${Date.now()}.${ext}`
+
     const form = new FormData()
     form.append('file', file)
+    form.append('filename', finalKey)
+
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
-      xhr.open('POST', '/api/watch-together/upload')
+      xhr.open('POST', 'https://bucket0.com/api/agent-bucket/files/upload')
+      xhr.setRequestHeader('Authorization', `Bearer ${agentKey}`)
+      
       xhr.upload.onprogress = (ev) => {
-        if (ev.lengthComputable) uploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
+        if (ev.lengthComputable) {
+          uploadProgress.value = Math.round((ev.loaded / ev.total) * 100)
+        }
       }
+      
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           const r = JSON.parse(xhr.responseText)
-          store.createRoom(r.key)
+          store.createRoom(r.key || finalKey)
           resolve()
-        } else reject(new Error(`Upload failed: ${xhr.statusText}`))
+        } else {
+          reject(new Error(`Upload failed: ${xhr.statusText}`))
+        }
       }
+      
       xhr.onerror = () => reject(new Error('Network error'))
       xhr.send(form)
     })
@@ -114,7 +141,7 @@ onMounted(() => {
     <!-- ── LOBBY ───────────────────────────────────────────────────────── -->
     <div v-else-if="store.status === 'lobby'" class="lobby">
       <div class="lobby-bg"></div>
-      <button class="back-btn" @click="router.push('/')">
+      <button class="back-btn" @click="store.cleanup().then(() => router.push('/'))">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
       </button>
       <div class="lobby-content">
@@ -169,6 +196,10 @@ onMounted(() => {
 
     <!-- ── PLAYER (hosting or watching) ────────────────────────────────── -->
     <div v-else-if="store.status === 'hosting' || store.status === 'watching'" class="player-wrap">
+      <!-- Back button overlay -->
+      <button class="player-back-btn" @click="store.myRole === 'host' ? store.cancelRoom().then(() => router.push('/')) : store.leaveRoom().then(() => router.push('/'))">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
       <video
         ref="videoRef"
         :src="videoUrl ?? undefined"
@@ -265,6 +296,17 @@ onMounted(() => {
 }
 .back-btn:hover { background: rgba(255,255,255,0.18); }
 .back-btn svg { width: 22px; height: 22px; }
+
+.player-back-btn {
+  position: absolute; top: 20px; left: 20px; z-index: 20;
+  background: rgba(0,0,0,0.5); border: none; color: #fff;
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.2s, opacity 0.3s;
+  opacity: 0.7;
+}
+.player-back-btn:hover { background: rgba(0,0,0,0.8); opacity: 1; }
+.player-back-btn svg { width: 22px; height: 22px; }
 
 .lobby-content {
   position: relative; z-index: 1;

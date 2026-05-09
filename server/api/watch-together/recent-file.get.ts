@@ -1,4 +1,4 @@
-import { listBucketObjects } from '../../utils/bucket0'
+import { listAgentBucketFiles } from '../../utils/agentBucket'
 import { getCurrentUser } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -8,13 +8,16 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 401, statusMessage: 'Not logged in.' })
     }
 
-    const result = await listBucketObjects(event, 'temp/watch-together-')
+    const files = await listAgentBucketFiles();
+    const result = {
+      objects: files.filter((f: any) => f.key.startsWith('temp/watch-together-'))
+    }
     
-    // Sort by lastModified descending to get the most recent one
+    // Sort by createdAt descending to get the most recent one
     const latest = result.objects
-      .sort((a, b) => {
-        const timeA = a.lastModified ? new Date(a.lastModified).getTime() : 0
-        const timeB = b.lastModified ? new Date(b.lastModified).getTime() : 0
+      .sort((a: any, b: any) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
         return timeB - timeA
       })[0]
 

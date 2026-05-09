@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { listAgentBucketFiles, deleteAgentBucketFile } from "../../utils/agentBucket";
 import { db } from "../../db/client";
 import { 
   appUsers, 
@@ -8,7 +8,6 @@ import {
   mediaCategories, 
   loveNotes 
 } from "../../db/schema";
-import { createBucket0Client } from "../../utils/bucket0";
 import { requireUser } from "../../utils/auth";
 
 export default defineEventHandler(async (event) => {
@@ -16,18 +15,12 @@ export default defineEventHandler(async (event) => {
   requireUser(event);
 
   try {
-    // 1. Reset S3 Bucket
-    const { client, bucket } = createBucket0Client(event);
-    const listResponse = await client.send(new ListObjectsV2Command({ Bucket: bucket }));
-    
-    if (listResponse.Contents && listResponse.Contents.length > 0) {
-      // Loop through and delete individually because the proxy might not support Multi-Delete (POST)
-      for (const obj of listResponse.Contents) {
-        if (obj.Key) {
-          await client.send(new DeleteObjectCommand({
-            Bucket: bucket,
-            Key: obj.Key
-          }));
+    // 1. Reset AgentBucket
+    const files = await listAgentBucketFiles();
+    if (files && files.length > 0) {
+      for (const file of files) {
+        if (file.key) {
+          await deleteAgentBucketFile(file.key);
         }
       }
     }

@@ -24,6 +24,16 @@ const displayTitle = computed(() => {
   if (title && !isFilename) return title
   return new Date(props.item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 })
+
+const mediaUrl = ref<string>('')
+
+onMounted(async () => {
+  try {
+    mediaUrl.value = await mediaStore.loadMediaBlob(props.item.bucketKey)
+  } catch (err) {
+    console.error('Failed to load media blob:', err)
+  }
+})
 </script>
 
 <template>
@@ -36,7 +46,7 @@ const displayTitle = computed(() => {
     <div class="card-thumbnail">
       <div v-if="item.mediaType === 'image'">
         <img
-          :src="mediaStore.getMediaUrl(item.bucketKey)"
+          :src="mediaUrl || ''"
           :alt="displayTitle"
           class="thumb-media"
           loading="lazy"
@@ -45,7 +55,7 @@ const displayTitle = computed(() => {
       <div v-else>
         <ClientOnly>
           <video
-            :src="mediaStore.getMediaUrl(item.bucketKey) + '#t=1.0'"
+            :src="mediaUrl ? mediaUrl + '#t=1.0' : ''"
             preload="metadata"
             muted
             playsinline
@@ -68,7 +78,7 @@ const displayTitle = computed(() => {
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           </button>
           
-          <a class="btn-circle outline-btn" :href="mediaStore.getMediaUrl(item.bucketKey)" download title="Download">
+          <a class="btn-circle outline-btn" :href="mediaUrl" download title="Download">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
           </a>
         </div>
