@@ -43,10 +43,23 @@ const currentItem = computed(() => {
   return mediaItems.value.find(item => item.id === mediaId)
 })
 
-const mediaUrl = computed(() => {
-  if (!currentItem.value) return ''
-  return mediaStore.getMediaUrl(currentItem.value.bucketKey)
-})
+const mediaUrl = ref<string>('')
+const isLoadingMedia = ref(false)
+
+watch(currentItem, async (newItem) => {
+  if (!newItem) {
+    mediaUrl.value = ''
+    return
+  }
+  isLoadingMedia.value = true
+  try {
+    mediaUrl.value = await mediaStore.loadMediaBlob(newItem.bucketKey)
+  } catch (err) {
+    console.error('Failed to load media blob:', err)
+  } finally {
+    isLoadingMedia.value = false
+  }
+}, { immediate: true })
 
 // Playlist / Series logic
 const playlist = computed(() => {
@@ -100,14 +113,20 @@ const saveTitle = async () => {
 const goNext = () => {
   if (hasNext.value && playlist.value) {
     const nextItem = playlist.value[currentIndex.value + 1]
-    if (nextItem) router.replace(`/watch/${nextItem.id}?series=${seriesId}&type=${seriesType}`)
+    if (nextItem) {
+      const q = seriesId ? `?series=${seriesId}&type=${seriesType}` : ''
+      router.replace(`/watch/${nextItem.id}${q}`)
+    }
   }
 }
 
 const goPrev = () => {
   if (hasPrev.value && playlist.value) {
     const prevItem = playlist.value[currentIndex.value - 1]
-    if (prevItem) router.replace(`/watch/${prevItem.id}?series=${seriesId}&type=${seriesType}`)
+    if (prevItem) {
+      const q = seriesId ? `?series=${seriesId}&type=${seriesType}` : ''
+      router.replace(`/watch/${prevItem.id}${q}`)
+    }
   }
 }
 
@@ -218,22 +237,25 @@ const toggleFullscreen = () => {
   >
     <!-- Media Renderer -->
     <div class="media-container">
-      <video 
-        v-if="currentItem.mediaType === 'video'" 
-        key="video"
-        :src="mediaUrl" 
-        controls 
-        autoplay 
-        class="media-content video-content"
-        @ended="onVideoEnded"
-      ></video>
-      <img 
-        v-else 
-        key="image"
-        :src="mediaUrl" 
-        alt="Memory" 
-        class="media-content image-content"
-      />
+      <div v-if="isLoadingMedia" class="large-spinner"></div>
+      <template v-else-if="mediaUrl">
+        <video 
+          v-if="currentItem.mediaType === 'video'" 
+          key="video"
+          :src="mediaUrl" 
+          controls 
+          autoplay 
+          class="media-content video-content"
+          @ended="onVideoEnded"
+        ></video>
+        <img 
+          v-else 
+          key="image"
+          :src="mediaUrl" 
+          alt="Memory" 
+          class="media-content image-content"
+        />
+      </template>
     </div>
 
     <!-- UI Overlay -->
@@ -506,6 +528,16 @@ const toggleFullscreen = () => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.large-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  border-top-color: #e50914;
+  animation: spin 1s linear infinite;
+  z-index: 10;
 }
 
 .ep-counter {
