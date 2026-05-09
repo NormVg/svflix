@@ -234,7 +234,7 @@ export const useMediaStore = defineStore('media', () => {
   };
 
   const getMediaUrl = (key: string) =>
-    `/api/media/proxy?key=${encodeURIComponent(key)}`;
+    objectUrls.value[key] || `/api/media/proxy?key=${encodeURIComponent(key)}`;
 
   const objectUrls = ref<Record<string, string>>({});
   

@@ -44,28 +44,24 @@ onMounted(async () => {
     @click="playMedia"
   >
     <div class="card-thumbnail">
-      <div v-if="item.mediaType === 'image'">
+      <template v-if="mediaUrl">
         <img
-          :src="mediaUrl || ''"
+          v-if="item.mediaType === 'image'"
+          :src="mediaUrl"
           :alt="displayTitle"
           class="thumb-media"
           loading="lazy"
         />
-      </div>
-      <div v-else>
-        <ClientOnly>
-          <video
-            :src="mediaUrl ? mediaUrl + '#t=1.0' : ''"
-            preload="metadata"
-            muted
-            playsinline
-            class="thumb-media"
-          ></video>
-          <template #fallback>
-            <div class="thumb-media thumb-placeholder"></div>
-          </template>
-        </ClientOnly>
-      </div>
+        <video
+          v-else
+          :src="mediaUrl + '#t=1.0'"
+          preload="metadata"
+          muted
+          playsinline
+          class="thumb-media"
+        ></video>
+      </template>
+      <div v-else class="thumb-media thumb-placeholder"></div>
       <div v-if="item.mediaType === 'video'" class="video-indicator">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       </div>
