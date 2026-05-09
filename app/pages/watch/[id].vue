@@ -3,6 +3,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMediaStore } from '../../stores/media'
 import { storeToRefs } from 'pinia'
 
+definePageMeta({
+  pageTransition: false,
+})
+
 const route = useRoute()
 const router = useRouter()
 const mediaStore = useMediaStore()
