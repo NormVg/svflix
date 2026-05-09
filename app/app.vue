@@ -60,7 +60,6 @@ onMounted(() => {
     </Transition>
 
     <div class="main-content" :class="{ blurred: showIntro }">
-      <ClientOnly>
         <!-- LOGIN VIEW -->
         <div v-if="!currentUser" class="login-view">
           <div class="login-bg"></div>
@@ -102,7 +101,6 @@ onMounted(() => {
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           </NuxtLink>
         </div>
-      </ClientOnly>
     </div>
   </div>
 </template>
