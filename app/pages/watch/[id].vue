@@ -243,8 +243,8 @@ const toggleFullscreen = () => {
 
 <template>
   <div class="watch-page-root">
-    <div 
-      class="watch-player" 
+    <div
+      class="watch-player"
       :class="{ 'hide-cursor': !showControls }"
       v-if="currentItem"
       @click="showCategoryMenu = false"
@@ -252,22 +252,23 @@ const toggleFullscreen = () => {
     <!-- Media Renderer -->
     <div class="media-container">
       <div v-if="isLoadingMedia" class="large-spinner"></div>
-      
-      <video 
-        v-if="!isLoadingMedia && mediaUrl && currentItem.mediaType === 'video'" 
+
+      <video
+        v-if="!isLoadingMedia && mediaUrl && currentItem.mediaType === 'video'"
         key="video"
-        :src="mediaUrl" 
-        controls 
-        autoplay 
+        :src="mediaUrl"
+        controls
+        autoplay
+        playsinline
         class="media-content video-content"
         @ended="onVideoEnded"
       ></video>
-      
-      <img 
-        v-if="!isLoadingMedia && mediaUrl && currentItem.mediaType === 'image'" 
+
+      <img
+        v-if="!isLoadingMedia && mediaUrl && currentItem.mediaType === 'image'"
         key="image"
-        :src="mediaUrl" 
-        alt="Memory" 
+        :src="mediaUrl"
+        alt="Memory"
         class="media-content image-content"
       />
     </div>
@@ -284,10 +285,10 @@ const toggleFullscreen = () => {
             </button>
             <div class="title-info">
               <div v-if="isEditing" class="title-edit-mode">
-                <input 
-                  v-model="editableTitle" 
-                  class="edit-title-input" 
-                  @keyup.enter="saveTitle" 
+                <input
+                  v-model="editableTitle"
+                  class="edit-title-input"
+                  @keyup.enter="saveTitle"
                   @keyup.esc="cancelEditing"
                   autofocus
                   :disabled="mediaStore.loading"
@@ -308,7 +309,7 @@ const toggleFullscreen = () => {
               </div>
             </div>
           </div>
-          
+
           <div class="top-right">
             <div class="category-menu-wrapper">
               <button class="control-btn action-btn" @click.stop="showCategoryMenu = !showCategoryMenu" title="Add to Collection">
@@ -318,10 +319,10 @@ const toggleFullscreen = () => {
                 <h3>Collections</h3>
                 <div class="category-list">
                   <label v-for="cat in categories" :key="cat.id" class="category-option">
-                    <input 
-                      type="checkbox" 
-                      :checked="currentCategoryIds.includes(cat.id)" 
-                      @change="toggleCategory(cat.id)" 
+                    <input
+                      type="checkbox"
+                      :checked="currentCategoryIds.includes(cat.id)"
+                      @change="toggleCategory(cat.id)"
                       :disabled="mediaStore.loading"
                     />
                     <span class="checkmark"></span>
