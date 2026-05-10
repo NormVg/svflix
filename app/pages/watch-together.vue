@@ -414,7 +414,7 @@ onMounted(() => {
 
 /* Player */
 .player-wrap { position: absolute; inset: 0; background: #000; }
-.player-video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.player-video { width: 100vw; height: 100vh; object-fit: contain; display: block; }
 
 /* Waiting overlay */
 .overlay-msg {
