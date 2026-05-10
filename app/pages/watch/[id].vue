@@ -368,6 +368,10 @@ const toggleFullscreen = () => {
 
 <style scoped>
 .watch-page-root {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background-color: #000;
   animation: watch-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -383,10 +387,10 @@ const toggleFullscreen = () => {
 }
 
 .watch-player {
-  position: fixed;
+  position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #000;
-  z-index: 9999;
+  display: flex;
+  flex-direction: column;
 }
 
 .watch-player.hide-cursor {
@@ -394,8 +398,8 @@ const toggleFullscreen = () => {
 }
 
 .media-container {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  flex: 1;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,6 +424,7 @@ const toggleFullscreen = () => {
   top: 0; left: 0; right: 0; bottom: 0;
   width: 100%; height: 100%;
   pointer-events: none; /* Let clicks pass through to media except for buttons */
+  z-index: 50;
 }
 
 .player-controls > * {
