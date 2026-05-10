@@ -387,8 +387,6 @@ const toggleFullscreen = () => {
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: #000;
   z-index: 9999;
-  display: flex;
-  flex-direction: column;
 }
 
 .watch-player.hide-cursor {
@@ -401,11 +399,14 @@ const toggleFullscreen = () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .media-content {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
