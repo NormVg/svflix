@@ -90,7 +90,7 @@ const playlist = computed(() => {
 })
 
 const currentIndex = computed(() => {
-  return playlist.value?.findIndex(item => item.id === mediaId) ?? -1
+  return playlist.value?.findIndex(item => item.id === mediaId.value) ?? -1
 })
 
 const hasNext = computed(() => playlist.value && currentIndex.value >= 0 && currentIndex.value < playlist.value.length - 1)
